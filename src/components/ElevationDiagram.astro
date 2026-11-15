@@ -1,0 +1,253 @@
+---
+interface ElevationPoint {
+  t: string;
+  v: number;
+  note: string;
+}
+
+interface Props {
+  points: ElevationPoint[];
+  figNo: string;
+  caption?: string;
+}
+
+const { points, figNo, caption } = Astro.props;
+
+const W = 800;
+const H = 320;
+const M = { left: 56, right: 24, top: 32, bottom: 48 };
+
+const plotLeft = M.left;
+const plotRight = W - M.right;
+const plotTop = M.top;
+const plotBottom = H - M.bottom;
+const plotW = plotRight - plotLeft;
+const plotH = plotBottom - plotTop;
+
+const xAt = (i: number) =>
+  plotLeft + (points.length <= 1 ? 0 : (i / (points.length - 1)) * plotW);
+const yAt = (v: number) => plotTop + (1 - v / 10) * plotH;
+
+const wrap = (text: string, max = 30): string[] => {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let line = '';
+
+  for (const word of words) {
+    if (!line) {
+      line = word;
+    } else if ((line + ' ' + word).length <= max) {
+      line += ' ' + word;
+    } else {
+      lines.push(line);
+      line = word;
+    }
+  }
+
+  if (line) lines.push(line);
+  return lines;
+};
+
+const CHAR_W = 6;
+const LINE_H = 13;
+const PAD = 8;
+
+const nodes = points.map((p, i) => {
+  const x = xAt(i);
+  const y = yAt(p.v);
+  const lines = wrap(p.note);
+  const maxLen = Math.max(...lines.map((l) => l.length));
+  const boxW = maxLen * CHAR_W + PAD * 2;
+  const boxH = lines.length * LINE_H + PAD * 2;
+
+  // Place above the node; flip below when the node is near the top edge.
+  const above = p.v < 8;
+  let boxX = x - boxW / 2;
+  boxX = Math.max(4, Math.min(boxX, W - boxW - 4));
+  let boxY = above ? y - 3 - 8 - boxH : y + 3 + 8;
+  boxY = Math.max(4, Math.min(boxY, H - boxH - 4));
+
+  return { x, y, v: p.v, lines, boxW, boxH, boxX, boxY };
+});
+
+const polylinePoints = points
+  .map((p, i) => `${xAt(i)},${yAt(p.v)}`)
+  .join(' ');
+
+const gridValues = [2.5, 5, 7.5];
+---
+
+<figure class="plate">
+  <svg
+    viewBox={`0 0 ${W} ${H}`}
+    class="w-full h-auto"
+    role="img"
+    aria-label="Structural elevation diagram"
+  >
+    <!-- faint horizontal gridlines -->
+    {
+      gridValues.map((gv) => (
+        <line
+          x1={plotLeft}
+          y1={yAt(gv)}
+          x2={plotRight}
+          y2={yAt(gv)}
+          stroke="#E5E2DC"
+          stroke-width="1"
+          stroke-dasharray="3 5"
+          opacity="0.5"
+        />
+      ))
+    }
+
+    <!-- drafting axes -->
+    <line
+      x1={plotLeft}
+      y1={plotTop}
+      x2={plotLeft}
+      y2={plotBottom}
+      stroke="#E5E2DC"
+      stroke-width="1"
+    />
+    <line
+      x1={plotLeft}
+      y1={plotBottom}
+      x2={plotRight}
+      y2={plotBottom}
+      stroke="#E5E2DC"
+      stroke-width="1"
+    />
+
+    <!-- vertical projections to the x-axis -->
+    {
+      nodes.map((n) => (
+        <line
+          x1={n.x}
+          y1={n.y}
+          x2={n.x}
+          y2={plotBottom}
+          stroke="#1A1A1A"
+          stroke-width="1"
+          stroke-dasharray="2 4"
+          opacity="0.25"
+        />
+      ))
+    }
+
+    <!-- tension polyline -->
+    <polyline
+      points={polylinePoints}
+      fill="none"
+      stroke="#1A1A1A"
+      stroke-width="1.5"
+    />
+
+    <!-- nodes + hover micro-annotations -->
+    {
+      nodes.map((n) => (
+        <g class="group cursor-crosshair">
+          <rect
+            x={n.x - 3}
+            y={n.y - 3}
+            width="6"
+            height="6"
+            fill="#F9F8F6"
+            stroke="#1A1A1A"
+            stroke-width="1"
+          />
+          <rect
+            x={n.x - 4.5}
+            y={n.y - 4.5}
+            width="9"
+            height="9"
+            fill="none"
+            stroke="#A85D6B"
+            stroke-width="1.5"
+            class="opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+          />
+          <g class="opacity-0 transition-opacity duration-200 group-hover:opacity-100 pointer-events-none">
+            <rect
+              x={n.boxX}
+              y={n.boxY}
+              width={n.boxW}
+              height={n.boxH}
+              fill="#F9F8F6"
+              stroke="#E5E2DC"
+              stroke-width="1"
+            />
+            {
+              n.lines.map((line, li) => (
+                <text
+                  x={n.boxX + n.boxW / 2}
+                  y={n.boxY + PAD + 8 + li * LINE_H}
+                  text-anchor="middle"
+                  class="font-mono"
+                  font-size="10"
+                  fill="#1A1A1A"
+                >
+                  {line}
+                </text>
+              ))
+            }
+          </g>
+        </g>
+      ))
+    }
+
+    <!-- x-axis phase labels -->
+    {
+      points.map((p, i) => (
+        <text
+          x={xAt(i)}
+          y={plotBottom + 24}
+          text-anchor="middle"
+          class="font-mono"
+          font-size="9.5"
+          letter-spacing="0.08em"
+          fill="#6E6A63"
+        >
+          {p.t.toUpperCase()}
+        </text>
+      ))
+    }
+
+    <!-- y-axis tick labels -->
+    <text
+      x={plotLeft - 10}
+      y={plotBottom + 3}
+      text-anchor="end"
+      class="font-mono"
+      font-size="9.5"
+      fill="#6E6A63"
+    >
+      0
+    </text>
+    <text
+      x={plotLeft - 10}
+      y={plotTop + 3}
+      text-anchor="end"
+      class="font-mono"
+      font-size="9.5"
+      fill="#6E6A63"
+    >
+      10
+    </text>
+
+    <!-- y-axis label -->
+    <text
+      transform={`translate(18 ${plotTop + plotH / 2}) rotate(-90)`}
+      text-anchor="middle"
+      class="font-mono"
+      font-size="9.5"
+      letter-spacing="0.08em"
+      fill="#6E6A63"
+    >
+      TENSION
+    </text>
+  </svg>
+
+  <figcaption>
+    <span>FIG. {figNo} — {caption ?? 'Structural Elevation'}</span>
+    <span>SCALE: NTS</span>
+  </figcaption>
+</figure>

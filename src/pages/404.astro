@@ -1,0 +1,80 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { navLinks } from '../data/site';
+---
+
+<BaseLayout title="Plate not found">
+  <section class="shell py-16 sm:py-20">
+    <p class="meta text-accent">Error / Plate Not Found</p>
+
+    <h1 class="mt-4 font-display text-5xl leading-[1.05] text-ink sm:text-6xl">
+      This plate is missing.
+    </h1>
+
+    <p class="mt-5 max-w-xl font-serif text-xl italic text-mute">
+      The drawing was never filed — or it has been withdrawn from the archive.
+    </p>
+
+    <figure class="plate mt-12 max-w-md">
+      <svg
+        viewBox="0 0 400 220"
+        class="h-auto w-full"
+        role="img"
+        aria-label="Plan view of a missing plate: a rectangle outline with a dashed missing corner"
+      >
+        <!-- solid sides: bottom, left, top-left, right-lower -->
+        <path
+          d="M 60 170 L 340 170 L 340 80"
+          fill="none"
+          stroke="#1A1A1A"
+          stroke-width="1.5"
+        />
+        <path
+          d="M 60 170 L 60 60 L 250 60"
+          fill="none"
+          stroke="#1A1A1A"
+          stroke-width="1.5"
+        />
+        <!-- dashed missing top-right corner -->
+        <line x1="250" y1="60" x2="340" y2="60" stroke="#6E6A63" stroke-width="1" stroke-dasharray="4 5" />
+        <line x1="340" y1="60" x2="340" y2="80" stroke="#6E6A63" stroke-width="1" stroke-dasharray="4 5" />
+        <!-- plan axes -->
+        <line x1="60" y1="115" x2="340" y2="115" stroke="#E5E2DC" stroke-width="1" stroke-dasharray="3 6" />
+        <line x1="200" y1="60" x2="200" y2="170" stroke="#E5E2DC" stroke-width="1" stroke-dasharray="3 6" />
+        <!-- filed mark, struck through -->
+        <circle cx="200" cy="115" r="3" fill="#F9F8F6" stroke="#A85D6B" stroke-width="1.25" />
+      </svg>
+      <figcaption>
+        <span>FIG. — NOT IN COLLECTION</span>
+        <span>SCALE: NTS</span>
+      </figcaption>
+    </figure>
+
+    <div class="mt-12">
+      <a
+        href="/"
+        class="inline-block font-mono text-sm uppercase tracking-[0.14em] text-accent underline decoration-hairline underline-offset-4 transition-colors hover:decoration-accent"
+      >
+        ← Return to the index
+      </a>
+
+      <nav class="mt-8" aria-label="Site index">
+        <ul class="flex flex-wrap items-center gap-x-3 gap-y-2">
+          {
+            navLinks.map((link, i) => (
+              <li class="flex items-center gap-x-3">
+                {i > 0 && <span class="text-mute" aria-hidden="true">·</span>}
+                <a
+                  href={link.href}
+                  class="meta transition-colors hover:text-accent"
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+  </section>
+</BaseLayout>

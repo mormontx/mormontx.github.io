@@ -1,0 +1,272 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { about } from '../data/about';
+
+const sections = [
+  { id: 'position', label: 'Position' },
+  { id: 'lineage', label: 'Lineage' },
+  { id: 'roles', label: 'Roles' },
+  { id: 'writing', label: 'Selected Writing' },
+  { id: 'contact', label: 'Contact' },
+];
+---
+
+<BaseLayout title="About">
+  <section class="shell py-16 sm:py-20">
+    <p class="meta">About / Colophon</p>
+    <h1 class="font-display text-4xl sm:text-5xl text-ink mt-4">
+      A Research-Teacher's Archive
+    </h1>
+    <p class="mt-4 max-w-2xl font-serif italic text-lg text-mute">
+      What it studies, what it stands on, and how to reach the person who keeps
+      it.
+    </p>
+
+    <div class="mt-14 grid gap-14 lg:grid-cols-[12rem_1fr] lg:gap-16">
+      <!-- sticky section index -->
+      <nav class="lg:sticky lg:top-8 lg:self-start" aria-label="About sections">
+        <p class="meta">Contents</p>
+        <ul class="mt-4 space-y-2 border-t border-hairline pt-4">
+          {
+            sections.map((section, i) => (
+              <li>
+                <a
+                  href={`#${section.id}`}
+                  class="meta transition-colors hover:text-accent"
+                >
+                  {String(i + 1).padStart(2, '0')} · {section.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <!-- body -->
+      <div class="max-w-[65ch]">
+        <section id="position" class="scroll-mt-8">
+          <p class="meta text-accent">01</p>
+          <h2 class="font-display text-2xl text-ink mt-2">Position</h2>
+          {
+            about.position.map((paragraph) => (
+              <p class="mt-6 font-serif text-lg text-ink/85">{paragraph}</p>
+            ))
+          }
+        </section>
+
+        <!-- load path plate -->
+        <figure class="plate my-12">
+          <svg
+            viewBox="0 0 800 260"
+            class="w-full h-auto"
+            role="img"
+            aria-label="Load path diagram: a beam carrying a load, with supports and a marked failure point"
+          >
+            <!-- ground line -->
+            <line
+              x1="70"
+              y1="214"
+              x2="730"
+              y2="214"
+              stroke="#E5E2DC"
+              stroke-width="1"
+              stroke-dasharray="3 6"
+            />
+            <!-- supports -->
+            <line x1="180" y1="150" x2="180" y2="214" stroke="#1A1A1A" stroke-width="1" />
+            <line x1="620" y1="150" x2="620" y2="214" stroke="#1A1A1A" stroke-width="1" />
+            <!-- beam -->
+            <line x1="100" y1="150" x2="700" y2="150" stroke="#1A1A1A" stroke-width="1.5" />
+            <!-- load arrow -->
+            <line
+              x1="400"
+              y1="46"
+              x2="400"
+              y2="142"
+              stroke="#A85D6B"
+              stroke-width="1"
+              stroke-dasharray="3 5"
+            />
+            <path
+              d="M 393 134 L 400 148 L 407 134"
+              fill="none"
+              stroke="#A85D6B"
+              stroke-width="1"
+            />
+            <text
+              x="400"
+              y="34"
+              text-anchor="middle"
+              class="font-mono"
+              font-size="9.5"
+              letter-spacing="0.08em"
+              fill="#6E6A63"
+            >
+              LOAD
+            </text>
+            <!-- failure point -->
+            <circle
+              cx="540"
+              cy="150"
+              r="3.5"
+              fill="#F9F8F6"
+              stroke="#A85D6B"
+              stroke-width="1.5"
+            />
+            <line
+              x1="540"
+              y1="150"
+              x2="540"
+              y2="72"
+              stroke="#E5E2DC"
+              stroke-width="1"
+              stroke-dasharray="2 4"
+            />
+            <text
+              x="540"
+              y="60"
+              text-anchor="middle"
+              class="font-mono"
+              font-size="9.5"
+              letter-spacing="0.08em"
+              fill="#6E6A63"
+            >
+              FAILURE POINT
+            </text>
+            <!-- structure + support labels -->
+            <text
+              x="260"
+              y="178"
+              text-anchor="middle"
+              class="font-mono"
+              font-size="9.5"
+              letter-spacing="0.08em"
+              fill="#6E6A63"
+            >
+              STRUCTURE
+            </text>
+            <text
+              x="180"
+              y="236"
+              text-anchor="middle"
+              class="font-mono"
+              font-size="9.5"
+              letter-spacing="0.08em"
+              fill="#6E6A63"
+            >
+              SUPPORT
+            </text>
+            <text
+              x="620"
+              y="236"
+              text-anchor="middle"
+              class="font-mono"
+              font-size="9.5"
+              letter-spacing="0.08em"
+              fill="#6E6A63"
+            >
+              SUPPORT
+            </text>
+          </svg>
+          <figcaption>
+            <span>FIG. A — LOAD, STRUCTURE, FAILURE POINT</span>
+            <span>SCALE: NTS</span>
+          </figcaption>
+        </figure>
+
+        <section id="lineage" class="scroll-mt-8">
+          <p class="meta text-accent">02</p>
+          <h2 class="font-display text-2xl text-ink mt-2">Lineage</h2>
+          {
+            about.lineage.map((thinker) => (
+              <div class="border-t border-hairline py-5">
+                <p class="font-serif text-lg italic text-ink">{thinker.name}</p>
+                <p class="mt-2 font-serif text-base text-mute">{thinker.taken}</p>
+              </div>
+            ))
+          }
+        </section>
+
+        <section id="roles" class="mt-14 scroll-mt-8">
+          <p class="meta text-accent">03</p>
+          <h2 class="font-display text-2xl text-ink mt-2">Roles</h2>
+          {
+            about.roles.map((role) => (
+              <div class="border-t border-hairline py-5">
+                <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <p class="font-serif text-lg italic text-ink">{role.role}</p>
+                  <p class="meta">{role.years}</p>
+                </div>
+                <p class="meta mt-1">{role.place}</p>
+                <p class="mt-3 font-serif text-base text-mute">{role.focus}</p>
+              </div>
+            ))
+          }
+        </section>
+
+        <section id="writing" class="mt-14 scroll-mt-8">
+          <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+            <p class="meta text-accent">04</p>
+            <a href="/notes/" class="meta transition-colors hover:text-accent">
+              → All Notes
+            </a>
+          </div>
+          <h2 class="font-display text-2xl text-ink mt-2">
+            Selected Writing &amp; Publication
+          </h2>
+          {
+            about.publications.map((pub) => (
+              <div class="border-t border-hairline py-4">
+                <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <p class="font-serif italic text-base text-ink">{pub.title}</p>
+                  <p class="meta">{pub.year}</p>
+                </div>
+                <p class="meta mt-1">{pub.venue}</p>
+              </div>
+            ))
+          }
+        </section>
+
+        <section id="contact" class="mt-14 scroll-mt-8">
+          <p class="meta text-accent">05</p>
+          <h2 class="font-display text-2xl text-ink mt-2">Contact</h2>
+          <div class="mt-2">
+            <div class="border-t border-hairline py-4">
+              <p class="meta">Email</p>
+              <p class="mt-1 font-mono text-sm text-ink">{about.contact.email}</p>
+            </div>
+            <div class="border-t border-hairline py-4">
+              <p class="meta">Website</p>
+              <p class="mt-1 font-mono text-sm text-ink">{about.contact.website}</p>
+            </div>
+            <div class="border-t border-hairline py-4">
+              <p class="meta">Scholar</p>
+              <p class="mt-1 font-mono text-sm text-ink">{about.contact.scholar}</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- closing -->
+    <div class="mt-16 border-t border-hairline pt-8">
+      <p class="font-serif italic text-lg text-ink">
+        Continue to{' '}
+        <a
+          href="/notes/"
+          class="text-accent underline decoration-hairline underline-offset-4 transition-colors hover:decoration-accent"
+        >
+          the notes
+        </a>
+        , or to the{' '}
+        <a
+          href="/register/"
+          class="text-accent underline decoration-hairline underline-offset-4 transition-colors hover:decoration-accent"
+        >
+          register of structures
+        </a>
+        .
+      </p>
+    </div>
+  </section>
+</BaseLayout>

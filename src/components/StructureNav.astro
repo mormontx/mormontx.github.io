@@ -1,0 +1,44 @@
+---
+interface NavLink {
+  href: string;
+  label: string;
+}
+
+interface Props {
+  prev?: NavLink | null;
+  next?: NavLink | null;
+}
+
+const { prev, next } = Astro.props;
+---
+
+<nav
+  class="mt-16 grid border-t border-hairline sm:grid-cols-2"
+  aria-label="Structure navigation"
+>
+  <div>
+    {
+      prev && (
+        <a
+          href={prev.href}
+          class="meta inline-block py-4 transition-colors hover:text-accent"
+        >
+          ← {prev.label}
+        </a>
+      )
+    }
+  </div>
+
+  <div class="sm:text-right">
+    {
+      next && (
+        <a
+          href={next.href}
+          class="meta inline-block py-4 transition-colors hover:text-accent"
+        >
+          {next.label} →
+        </a>
+      )
+    }
+  </div>
+</nav>

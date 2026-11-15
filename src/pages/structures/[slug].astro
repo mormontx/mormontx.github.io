@@ -1,0 +1,116 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SpecSheet from '../../components/SpecSheet.astro';
+import ElevationDiagram from '../../components/ElevationDiagram.astro';
+import BlueprintDrawer from '../../components/BlueprintDrawer.astro';
+import StructureNav from '../../components/StructureNav.astro';
+import StructureViewer from '../../components/three/StructureViewer';
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
+export async function getStaticPaths() {
+  const entries = (await getCollection('structures')).sort(
+    (a, b) => a.data.number - b.data.number,
+  );
+
+  return entries.map((entry, i) => ({
+    params: { slug: entry.id },
+    props: {
+      entry,
+      prev: i > 0 ? entries[i - 1] : null,
+      next: i < entries.length - 1 ? entries[i + 1] : null,
+    },
+  }));
+}
+
+const { entry, prev, next } = Astro.props;
+const { Content } = await render(entry);
+
+const d = entry.data;
+
+const prevLink = prev
+  ? {
+      href: `/structures/${prev.id}/`,
+      label: `${pad(prev.data.number)} · ${prev.data.title.toUpperCase()}`,
+    }
+  : null;
+
+const nextLink = next
+  ? {
+      href: `/structures/${next.id}/`,
+      label: `${pad(next.data.number)} · ${next.data.title.toUpperCase()}`,
+    }
+  : null;
+---
+
+<BaseLayout title={d.title}>
+  <article class="shell">
+    <!-- 1. breadcrumb -->
+    <div class="py-10">
+      <p class="meta">
+        <a href="/" class="transition-colors hover:text-accent">← Index</a>
+        <span class="text-hairline"> · </span>
+        Project {pad(d.number)}/04
+      </p>
+    </div>
+
+    <!-- 2. title block -->
+    <header class="py-8">
+      <p class="meta text-accent">№ {pad(d.number)}</p>
+      <h1 class="font-display text-5xl sm:text-6xl text-ink mt-3">{d.title}</h1>
+      <p class="mt-6 max-w-2xl font-serif text-xl italic text-mute">{d.summary}</p>
+    </header>
+
+    <!-- interactive model -->
+    <div class="mt-12">
+      <StructureViewer
+        client:visible
+        number={d.number}
+        title={d.title}
+        sketch={d.sketch}
+      />
+    </div>
+
+    <!-- 3. specification sheet -->
+    <div class="mt-12">
+      <SpecSheet
+        number={d.number}
+        title={d.title}
+        typology={d.typology}
+        scale={d.scale}
+        medium={d.medium}
+        loadBearing={d.loadBearing}
+        site={d.site}
+        year={d.year}
+      />
+    </div>
+
+    <!-- 4. sketch plate -->
+    <figure class="plate mt-12">
+      <img src={d.sketch} alt={d.sketchCaption} class="w-full" />
+      <figcaption>
+        <span>FIG. 01 — {d.sketchCaption}</span>
+        <span>SCALE: NTS</span>
+      </figcaption>
+    </figure>
+
+    <!-- 5. elevation diagram -->
+    <div class="mt-12">
+      <ElevationDiagram points={d.elevation} figNo="02" />
+    </div>
+
+    <!-- 6. narrative -->
+    <div class="md-content relative max-w-[65ch] mt-16">
+      <Content />
+    </div>
+
+    <!-- 7. blueprint -->
+    <div class="mt-16">
+      <BlueprintDrawer blueprint={d.blueprint} />
+    </div>
+
+    <!-- 8. prev / next -->
+    <StructureNav prev={prevLink} next={nextLink} />
+  </article>
+</BaseLayout>

@@ -1,0 +1,280 @@
+[
+  {
+    "slug": "01-the-dialectic-room",
+    "file": "qa/p4c-dossier-01.png",
+    "width": 1440,
+    "height": 900,
+    "reduced": false,
+    "exploded": false,
+    "panel": {
+      "x": 240,
+      "y": 180.59375,
+      "w": 960,
+      "h": 539
+    },
+    "canvas": {
+      "x": 241,
+      "y": 181.59375,
+      "w": 958,
+      "h": 468
+    },
+    "buttons": [
+      {
+        "text": "EXPLODED VIEW",
+        "width": 131.828125,
+        "height": 44,
+        "ariaPressed": "false"
+      },
+      {
+        "text": "RESET VIEW",
+        "width": 107.40625,
+        "height": 44,
+        "ariaPressed": null
+      }
+    ],
+    "buttonCount": 2,
+    "hint": "present",
+    "scrollY": 292
+  },
+  {
+    "slug": "01-the-dialectic-room",
+    "file": "qa/p4c-dossier-01-exploded.png",
+    "width": 1440,
+    "height": 900,
+    "reduced": false,
+    "exploded": true,
+    "panel": {
+      "x": 240,
+      "y": 180.59375,
+      "w": 960,
+      "h": 539
+    },
+    "canvas": {
+      "x": 241,
+      "y": 181.59375,
+      "w": 958,
+      "h": 468
+    },
+    "buttons": [
+      {
+        "text": "ASSEMBLED VIEW",
+        "width": 139.96875,
+        "height": 44,
+        "ariaPressed": "true"
+      },
+      {
+        "text": "RESET VIEW",
+        "width": 107.40625,
+        "height": 44,
+        "ariaPressed": null
+      }
+    ],
+    "buttonCount": 2,
+    "hint": "present",
+    "scrollY": 292
+  },
+  {
+    "slug": "02-the-unstable-prompt",
+    "file": "qa/p4c-dossier-02.png",
+    "width": 1440,
+    "height": 900,
+    "reduced": false,
+    "exploded": false,
+    "panel": {
+      "x": 240,
+      "y": 180.59375,
+      "w": 960,
+      "h": 539
+    },
+    "canvas": {
+      "x": 241,
+      "y": 181.59375,
+      "w": 958,
+      "h": 468
+    },
+    "buttons": [
+      {
+        "text": "EXPLODED VIEW",
+        "width": 131.828125,
+        "height": 44,
+        "ariaPressed": "false"
+      },
+      {
+        "text": "RESET VIEW",
+        "width": 107.40625,
+        "height": 44,
+        "ariaPressed": null
+      }
+    ],
+    "buttonCount": 2,
+    "hint": "present",
+    "scrollY": 292
+  },
+  {
+    "slug": "03-scaffolding-silence",
+    "file": "qa/p4c-dossier-03.png",
+    "width": 1440,
+    "height": 900,
+    "reduced": false,
+    "exploded": false,
+    "panel": {
+      "x": 240,
+      "y": 180.59375,
+      "w": 960,
+      "h": 539
+    },
+    "canvas": {
+      "x": 241,
+      "y": 181.59375,
+      "w": 958,
+      "h": 468
+    },
+    "buttons": [
+      {
+        "text": "EXPLODED VIEW",
+        "width": 131.828125,
+        "height": 44,
+        "ariaPressed": "false"
+      },
+      {
+        "text": "RESET VIEW",
+        "width": 107.40625,
+        "height": 44,
+        "ariaPressed": null
+      }
+    ],
+    "buttonCount": 2,
+    "hint": "present",
+    "scrollY": 292
+  },
+  {
+    "slug": "04-marginalia-as-dialogue",
+    "file": "qa/p4c-dossier-04.png",
+    "width": 1440,
+    "height": 900,
+    "reduced": false,
+    "exploded": false,
+    "panel": {
+      "x": 240,
+      "y": 180.59375,
+      "w": 960,
+      "h": 539
+    },
+    "canvas": {
+      "x": 241,
+      "y": 181.59375,
+      "w": 958,
+      "h": 468
+    },
+    "buttons": [
+      {
+        "text": "EXPLODED VIEW",
+        "width": 131.828125,
+        "height": 44,
+        "ariaPressed": "false"
+      },
+      {
+        "text": "RESET VIEW",
+        "width": 107.40625,
+        "height": 44,
+        "ariaPressed": null
+      }
+    ],
+    "buttonCount": 2,
+    "hint": "present",
+    "scrollY": 292
+  },
+  {
+    "slug": "01-the-dialectic-room",
+    "file": "qa/p4c-dossier-1280.png",
+    "width": 1280,
+    "height": 800,
+    "reduced": false,
+    "exploded": false,
+    "panel": {
+      "x": 160,
+      "y": 156.59375,
+      "w": 960,
+      "h": 487
+    },
+    "canvas": {
+      "x": 161,
+      "y": 157.59375,
+      "w": 958,
+      "h": 416
+    },
+    "buttons": [
+      {
+        "text": "EXPLODED VIEW",
+        "width": 131.828125,
+        "height": 44,
+        "ariaPressed": "false"
+      },
+      {
+        "text": "RESET VIEW",
+        "width": 107.40625,
+        "height": 44,
+        "ariaPressed": null
+      }
+    ],
+    "buttonCount": 2,
+    "hint": "present",
+    "scrollY": 316
+  },
+  {
+    "slug": "01-the-dialectic-room",
+    "file": "qa/p4c-dossier-390.png",
+    "width": 390,
+    "height": 844,
+    "reduced": false,
+    "exploded": false,
+    "panel": {
+      "x": 24,
+      "y": 166.59375,
+      "w": 342,
+      "h": 511.234375
+    },
+    "canvas": {
+      "x": 25,
+      "y": 167.59375,
+      "w": 340,
+      "h": 388.234375
+    },
+    "buttons": [
+      {
+        "text": "EXPLODED VIEW",
+        "width": 131.828125,
+        "height": 44,
+        "ariaPressed": "false"
+      },
+      {
+        "text": "RESET VIEW",
+        "width": 107.40625,
+        "height": 44,
+        "ariaPressed": null
+      }
+    ],
+    "buttonCount": 2,
+    "hint": "present",
+    "scrollY": 386
+  },
+  {
+    "slug": "01-the-dialectic-room",
+    "file": "qa/p4c-dossier-reduced.png",
+    "width": 1440,
+    "height": 900,
+    "reduced": true,
+    "exploded": false,
+    "panel": {
+      "x": 240,
+      "y": 194.59375,
+      "w": 960,
+      "h": 511
+    },
+    "canvas": null,
+    "buttons": [],
+    "buttonCount": 0,
+    "hint": "missing",
+    "scrollY": 278
+  }
+]

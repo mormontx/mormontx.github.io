@@ -1,0 +1,117 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const MONTHS = [
+  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+];
+
+const fmtDate = (d: Date) =>
+  `${String(d.getUTCDate()).padStart(2, '0')} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+
+const readingTime = (body: string) =>
+  Math.max(1, Math.ceil(body.trim().split(/\s+/).length / 220));
+
+export async function getStaticPaths() {
+  const entries = (await getCollection('notes'))
+    .filter((note) => !note.data.draft)
+    .sort((a, b) => a.data.date.getTime() - b.data.date.getTime());
+
+  return entries.map((entry, i) => ({
+    params: { slug: entry.id },
+    props: {
+      entry,
+      prev: i > 0 ? entries[i - 1] : null,
+      next: i < entries.length - 1 ? entries[i + 1] : null,
+    },
+  }));
+}
+
+const { entry, prev, next } = Astro.props;
+const { Content } = await render(entry);
+
+const d = entry.data;
+const dateLabel = fmtDate(d.date);
+const time = readingTime(entry.body ?? '');
+
+const prevLink = prev
+  ? { href: `/notes/${prev.id}/`, label: `${fmtDate(prev.data.date)} · ${prev.data.title}` }
+  : null;
+
+const nextLink = next
+  ? { href: `/notes/${next.id}/`, label: `${fmtDate(next.data.date)} · ${next.data.title}` }
+  : null;
+---
+
+<BaseLayout title={d.title}>
+  <article class="shell">
+    <!-- 1. header -->
+    <header class="py-12 sm:py-16">
+      <p class="meta">
+        <a href="/notes/" class="transition-colors hover:text-accent">← Notes</a>
+      </p>
+
+      <p class="meta text-accent mt-8">
+        {d.kind} · {dateLabel} · {time} MIN READ
+      </p>
+      <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl text-ink mt-3">
+        {d.title}
+      </h1>
+      <p class="mt-6 max-w-2xl font-serif text-xl italic text-mute">
+        {d.summary}
+      </p>
+    </header>
+
+    <!-- 2. narrative -->
+    <div class="md-content relative max-w-[65ch] mt-4">
+      <Content />
+    </div>
+
+    <!-- 3. footer rail -->
+    <footer class="mt-16">
+      <div class="flex flex-wrap gap-2 border-t border-hairline pt-6">
+        {
+          d.tags.map((tag) => (
+            <span
+              class="border border-hairline px-3 py-1.5 font-mono text-xs uppercase tracking-[0.14em] text-mute"
+            >
+              {tag}
+            </span>
+          ))
+        }
+      </div>
+
+      <nav
+        class="mt-12 grid border-t border-hairline sm:grid-cols-2"
+        aria-label="Note navigation"
+      >
+        <div>
+          {
+            prevLink && (
+              <a
+                href={prevLink.href}
+                class="meta inline-block py-4 transition-colors hover:text-accent"
+              >
+                ← {prevLink.label}
+              </a>
+            )
+          }
+        </div>
+
+        <div class="sm:text-right">
+          {
+            nextLink && (
+              <a
+                href={nextLink.href}
+                class="meta inline-block py-4 transition-colors hover:text-accent"
+              >
+                {nextLink.label} →
+              </a>
+            )
+          }
+        </div>
+      </nav>
+    </footer>
+  </article>
+</BaseLayout>

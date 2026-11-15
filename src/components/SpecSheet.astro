@@ -1,0 +1,45 @@
+---
+interface Props {
+  number: number;
+  title: string;
+  typology: string;
+  scale: string;
+  medium: string;
+  loadBearing: string;
+  site: string;
+  year: number;
+}
+
+const { number, title, typology, scale, medium, loadBearing, site, year } =
+  Astro.props;
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
+const rows: Array<{ label: string; value: string }> = [
+  { label: 'Project', value: `${pad(number)} / ${title}` },
+  { label: 'Typology', value: typology },
+  { label: 'Scale', value: scale },
+  { label: 'Medium', value: medium },
+  { label: 'Load-Bearing', value: loadBearing },
+  { label: 'Site', value: site },
+  { label: 'Year', value: String(year) },
+];
+---
+
+<div>
+  <div class="flex items-baseline justify-between gap-4">
+    <p class="meta">Architectural Specification</p>
+    <p class="meta">Sheet {pad(number)}/04</p>
+  </div>
+
+  <dl class="spec-grid grid sm:grid-cols-2">
+    {
+      rows.map((row) => (
+        <div class="border-t border-hairline py-3">
+          <dt>{row.label}</dt>
+          <dd>{row.value}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</div>

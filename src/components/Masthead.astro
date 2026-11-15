@@ -1,0 +1,41 @@
+---
+import { site, navLinks } from '../data/site';
+
+const pathname = Astro.url.pathname;
+const links = navLinks.map((link) => ({
+  ...link,
+  isActive: link.href === '/' ? pathname === '/' : pathname.startsWith(link.href),
+}));
+---
+
+<header class="border-b border-hairline">
+  <div class="shell flex items-center justify-between gap-4 py-4">
+    <p class="meta">
+      <span class="text-accent">[01]</span> {site.siteTitle}
+    </p>
+    <p class="meta">{site.name} / {site.studio}</p>
+  </div>
+
+  <nav class="shell" aria-label="Primary">
+    <ul class="flex items-center gap-6 border-t border-hairline py-2">
+      {
+        links.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              aria-current={link.isActive ? 'page' : undefined}
+              class:list={['meta', link.isActive ? 'text-ink' : 'hover:text-accent']}
+            >
+              {
+                link.isActive && (
+                  <span class="mr-1.5 text-accent" aria-hidden="true">■</span>
+                )
+              }
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>

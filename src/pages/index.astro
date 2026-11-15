@@ -1,0 +1,83 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TectonicField from '../components/three/TectonicField';
+import ArchiveIndex from '../components/ArchiveIndex';
+
+const structures = (await getCollection('structures')).sort(
+  (a, b) => a.data.number - b.data.number,
+);
+
+const archive = structures.map((entry) => ({
+  id: entry.id,
+  number: entry.data.number,
+  title: entry.data.title,
+  typology: entry.data.typology,
+  scale: entry.data.scale,
+  medium: entry.data.medium,
+  year: entry.data.year,
+}));
+---
+
+<BaseLayout title="Index">
+  <!-- Hero: type column + a single large model, never overlapping. -->
+  <section
+    id="hero"
+    class="relative h-[min(calc(100svh-114px),860px)] w-full overflow-hidden lg:h-[min(calc(100svh-98px),860px)]"
+  >
+    <!-- Type column -->
+    <div class="hero-type px-6 pt-5 sm:px-8 lg:px-0 lg:pt-0">
+      <div class="lg:translate-y-10">
+        <p class="meta text-accent">
+          [01] PEDAGOGICAL TECTONICS · MODEL 01
+        </p>
+        <h1
+          class="mt-4 font-display leading-[1.06] tracking-[-0.01em] text-ink"
+          style="font-size: clamp(2.2rem, 3.2vw, 3.35rem)"
+        >
+          <span class="block">Teaching lives in</span>
+          <span class="block italic">unrepeatable</span>
+          <span class="block">moments.</span>
+        </h1>
+        <p class="mt-4 max-w-md font-serif text-lg italic text-mute sm:text-xl">
+          A teaching portfolio composed as an architectural monograph.
+        </p>
+        <p class="meta mt-5">
+          FOUR STRUCTURES · ONE ARCHIVE · MODELS IN THREE DIMENSIONS
+        </p>
+        <a
+          href="#archive"
+          class="mt-7 inline-block font-mono text-sm uppercase tracking-[0.14em] text-accent underline decoration-hairline underline-offset-4 transition-colors hover:decoration-accent"
+        >
+          Enter the archive ↓
+        </a>
+      </div>
+    </div>
+
+    <!-- Model column -->
+    <div class="hero-canvas-box mt-4 shrink-0 lg:mt-0">
+      <TectonicField client:idle />
+    </div>
+  </section>
+
+  <!-- Archive index -->
+  <section id="archive" class="shell py-20 sm:py-28">
+    <div class="rule"></div>
+
+    <div class="flex items-baseline justify-between py-4">
+      <p class="meta">Index / Selected Structures</p>
+      <p class="meta">[2022 —]</p>
+    </div>
+
+    <ArchiveIndex structures={archive} client:visible />
+  </section>
+
+  <!-- Archive statement, below the index. -->
+  <section class="shell pb-20 sm:pb-28">
+    <blockquote class="max-w-2xl font-serif text-2xl italic leading-snug text-mute sm:text-3xl">
+      Four structures, documented as models — each one a load path through a
+      room. Read the index, or begin with the register.
+    </blockquote>
+    <p class="meta mt-8">04 Structures Documented — An Ongoing Archive</p>
+  </section>
+</BaseLayout>

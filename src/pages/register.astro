@@ -1,0 +1,121 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const structures = (await getCollection('structures')).sort(
+  (a, b) => a.data.number - b.data.number,
+);
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
+type Structure = (typeof structures)[number];
+
+const byOrigin = new Map<string, Structure[]>();
+for (const s of structures) {
+  const list = byOrigin.get(s.data.origin) ?? [];
+  list.push(s);
+  byOrigin.set(s.data.origin, list);
+}
+
+const byMedium = new Map<string, Structure[]>();
+for (const s of structures) {
+  const list = byMedium.get(s.data.medium) ?? [];
+  list.push(s);
+  byMedium.set(s.data.medium, list);
+}
+---
+
+<BaseLayout title="Register">
+  <section class="shell py-16 sm:py-20">
+    <p class="meta">Register / Colophon</p>
+    <h1 class="font-display text-4xl sm:text-5xl text-ink mt-4">
+      Register of Structures
+    </h1>
+    <p class="mt-4 max-w-2xl font-serif italic text-lg text-mute">
+      Four documented classroom structures, indexed by lineage and material.
+    </p>
+
+    <!-- dense index table -->
+    <div class="mt-12 overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead>
+          <tr class="meta">
+            <th class="border-b border-hairline pb-3 pr-4 font-normal">№</th>
+            <th class="border-b border-hairline pb-3 pr-4 font-normal">Title</th>
+            <th class="border-b border-hairline pb-3 pr-4 font-normal">Typology</th>
+            <th class="border-b border-hairline pb-3 pr-4 font-normal">Medium</th>
+            <th class="border-b border-hairline pb-3 pr-4 font-normal">Scale</th>
+            <th class="border-b border-hairline pb-3 pr-4 font-normal">Origin</th>
+            <th class="border-b border-hairline pb-3 font-normal">Year</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            structures.map((s) => (
+              <tr class="border-t border-hairline">
+                <td class="py-3 pr-4 font-mono text-mute">{pad(s.data.number)}</td>
+                <td class="py-3 pr-4">
+                  <a
+                    href={`/structures/${s.id}/`}
+                    class="font-serif italic text-base text-ink transition-colors hover:text-accent"
+                  >
+                    {s.data.title}
+                  </a>
+                </td>
+                <td class="py-3 pr-4 font-mono text-mute">{s.data.typology}</td>
+                <td class="py-3 pr-4 font-mono text-mute">{s.data.medium}</td>
+                <td class="py-3 pr-4 font-mono text-mute">{s.data.scale}</td>
+                <td class="py-3 pr-4 font-mono text-mute">{s.data.origin}</td>
+                <td class="py-3 font-mono text-mute">{s.data.year}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- groupings -->
+    <div class="mt-16 grid gap-12 sm:grid-cols-2">
+      <div>
+        <p class="meta">By Origin</p>
+        <div class="mt-4">
+          {
+            Array.from(byOrigin.entries()).map(([origin, list]) => (
+              <div class="border-t border-hairline py-3">
+                <p class="font-serif italic text-base text-ink">{origin}</p>
+                <p class="mt-1 font-mono text-sm text-mute">
+                  [{list.map((s) => pad(s.data.number)).join(' · ')}]
+                </p>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <div>
+        <p class="meta">By Medium</p>
+        <div class="mt-4">
+          {
+            Array.from(byMedium.entries()).map(([medium, list]) => (
+              <div class="border-t border-hairline py-3">
+                <p class="font-serif italic text-base text-ink">{medium}</p>
+                <p class="mt-1 font-mono text-sm text-mute">
+                  [{list.map((s) => pad(s.data.number)).join(' · ')}]
+                </p>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- colophon -->
+    <div class="mt-16 border-t border-hairline pt-8 pb-4">
+      <p class="meta">Set in Fraunces, Newsreader &amp; IBM Plex Mono</p>
+      <p class="meta">PAPER #F9F8F6 · INK #1A1A1A · ASH PINK #A85D6B · HAIRLINE 1PX</p>
+      <p class="meta">
+        Compiled with Astro — Archival Static HTML, No Runtime Dependencies
+      </p>
+    </div>
+  </section>
+</BaseLayout>
