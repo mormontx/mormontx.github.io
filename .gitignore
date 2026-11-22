@@ -7,9 +7,6 @@ dist/
 # Astro generated
 .astro/
 
-# Generated docs (kept local, not part of the site source)
-docs/
-
 # QA scratch (screenshots and reports stay local)
 qa/
 
