@@ -58,21 +58,32 @@
     @apply mx-auto w-full max-w-5xl px-6 sm:px-8;
   }
 
-  /* Soft radial masks so a WebGL canvas never shows a rectangular edge. */
+  /* Fade the hero canvas into the paper so the ground plane never shows a
+     rectangular edge: top and bottom always, plus the inner (left) edge once
+     the canvas sits beside the type column. The right edge bleeds off-page. */
   .hero-canvas-mask {
-    -webkit-mask-image: radial-gradient(
-      135% 115% at 55% 45%,
-      #000 55%,
-      transparent 98%
+    --fade-y: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 14%,
+      #000 84%,
+      transparent 100%
     );
-    mask-image: radial-gradient(
-      135% 115% at 55% 45%,
-      #000 55%,
-      transparent 98%
-    );
+    -webkit-mask-image: var(--fade-y);
+    mask-image: var(--fade-y);
+  }
+  @media (min-width: 1024px) {
+    .hero-canvas-mask {
+      --fade-x: linear-gradient(to right, transparent 0, #000 22%);
+      -webkit-mask-image: var(--fade-x), var(--fade-y);
+      -webkit-mask-composite: source-in;
+      mask-image: var(--fade-x), var(--fade-y);
+      mask-composite: intersect;
+    }
   }
 
-  /* Deterministic hero columns: type anchored to the shell edge, canvas bleeds
+  /* Deterministic hero columns: type anchored to the shell content edge (the
+     same left line as the masthead and archive), canvas bleeds
      to the right viewport edge with a guaranteed 2.5rem gutter. */
   .hero-type {
     position: relative;
@@ -87,7 +98,7 @@
       position: absolute;
       top: 0;
       bottom: 0;
-      left: max((100vw - 64rem) / 2, 2rem);
+      left: calc(max((100vw - 64rem) / 2, 0px) + 2rem);
       width: min(44vw, 540px);
       display: flex;
       flex-direction: column;
@@ -99,7 +110,7 @@
       top: 0;
       bottom: 0;
       left: calc(
-        max((100vw - 64rem) / 2, 2rem) + min(44vw, 540px) + 2.5rem
+        max((100vw - 64rem) / 2, 0px) + 2rem + min(44vw, 540px) + 2.5rem
       );
       right: 0;
       height: auto;
