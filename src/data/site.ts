@@ -1,5 +1,5 @@
 export const site = {
-  name: 'Tugcan Yıldırım',
+  name: 'Tuğcan Yıldırım',
   studio: 'Studio Archive',
   siteTitle: 'Pedagogical Tectonics',
   description:

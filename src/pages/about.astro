@@ -1,14 +1,22 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { about } from '../data/about';
+import { pad } from '../lib/format';
 
 const sections = [
   { id: 'position', label: 'Position' },
   { id: 'lineage', label: 'Lineage' },
   { id: 'roles', label: 'Roles' },
-  { id: 'writing', label: 'Selected Writing' },
+  { id: 'formation', label: 'Formation' },
+  { id: 'writing', label: 'Selected Work' },
   { id: 'contact', label: 'Contact' },
 ];
+
+/** Section number derived from its position in the contents list. */
+const num = (id: string) => pad(sections.findIndex((s) => s.id === id) + 1);
+
+const linkClass =
+  'text-accent underline decoration-hairline underline-offset-4 transition-colors hover:decoration-accent';
 ---
 
 <BaseLayout title="About">
@@ -21,6 +29,7 @@ const sections = [
       What it studies, what it stands on, and how to reach the person who keeps
       it.
     </p>
+    <p class="meta mt-6">{about.discipline}</p>
 
     <div class="mt-14 grid gap-14 lg:grid-cols-[12rem_1fr] lg:gap-16">
       <!-- sticky section index -->
@@ -34,7 +43,7 @@ const sections = [
                   href={`#${section.id}`}
                   class="meta transition-colors hover:text-accent"
                 >
-                  {String(i + 1).padStart(2, '0')} · {section.label}
+                  {pad(i + 1)} · {section.label}
                 </a>
               </li>
             ))
@@ -45,7 +54,7 @@ const sections = [
       <!-- body -->
       <div class="max-w-[65ch]">
         <section id="position" class="scroll-mt-8">
-          <p class="meta text-accent">01</p>
+          <p class="meta text-accent">{num('position')}</p>
           <h2 class="font-display text-2xl text-ink mt-2">Position</h2>
           {
             about.position.map((paragraph) => (
@@ -175,7 +184,7 @@ const sections = [
         </figure>
 
         <section id="lineage" class="scroll-mt-8">
-          <p class="meta text-accent">02</p>
+          <p class="meta text-accent">{num('lineage')}</p>
           <h2 class="font-display text-2xl text-ink mt-2">Lineage</h2>
           {
             about.lineage.map((thinker) => (
@@ -188,61 +197,106 @@ const sections = [
         </section>
 
         <section id="roles" class="mt-14 scroll-mt-8">
-          <p class="meta text-accent">03</p>
+          <p class="meta text-accent">{num('roles')}</p>
           <h2 class="font-display text-2xl text-ink mt-2">Roles</h2>
           {
             about.roles.map((role) => (
               <div class="border-t border-hairline py-5">
                 <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <p class="font-serif text-lg italic text-ink">{role.role}</p>
-                  <p class="meta">{role.years}</p>
+                  <p class="font-serif text-lg italic text-ink">{role.title}</p>
+                  <p class="meta whitespace-nowrap">{role.years}</p>
                 </div>
                 <p class="meta mt-1">{role.place}</p>
-                <p class="mt-3 font-serif text-base text-mute">{role.focus}</p>
+                <p class="mt-3 font-serif text-base text-mute">{role.note}</p>
               </div>
             ))
           }
         </section>
 
+        <section id="formation" class="mt-14 scroll-mt-8">
+          <p class="meta text-accent">{num('formation')}</p>
+          <h2 class="font-display text-2xl text-ink mt-2">Formation</h2>
+          {
+            about.formation.map((entry) => (
+              <div class="border-t border-hairline py-5">
+                <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <p class="font-serif text-lg italic text-ink">{entry.title}</p>
+                  <p class="meta whitespace-nowrap">{entry.years}</p>
+                </div>
+                <p class="meta mt-1">{entry.place}</p>
+                <p class="mt-3 font-serif text-base text-mute">{entry.note}</p>
+              </div>
+            ))
+          }
+          <div class="border-t border-hairline pt-5">
+            <p class="meta">Credentials</p>
+            <ul class="mt-3">
+              {
+                about.credentials.map((credential) => (
+                  <li class="py-2">
+                    <p class="font-serif text-base text-ink">{credential.title}</p>
+                    <p class="meta mt-0.5">{credential.issuer}</p>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </section>
+
         <section id="writing" class="mt-14 scroll-mt-8">
           <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-            <p class="meta text-accent">04</p>
+            <p class="meta text-accent">{num('writing')}</p>
             <a href="/notes/" class="meta transition-colors hover:text-accent">
               → All Notes
             </a>
           </div>
           <h2 class="font-display text-2xl text-ink mt-2">
-            Selected Writing &amp; Publication
+            Selected Writing &amp; Work
           </h2>
           {
-            about.publications.map((pub) => (
+            about.writing.map((work) => (
               <div class="border-t border-hairline py-4">
-                <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <p class="font-serif italic text-base text-ink">{pub.title}</p>
-                  <p class="meta">{pub.year}</p>
+                <div class="flex items-baseline justify-between gap-x-6">
+                  <p class="font-serif italic text-base text-ink">
+                    {work.href ? (
+                      <a href={work.href} class="transition-colors hover:text-accent" target="_blank" rel="noopener">
+                        {work.title}<span class="sr-only"> (opens in a new tab)</span>
+                      </a>
+                    ) : (
+                      work.title
+                    )}
+                  </p>
+                  {work.year && <p class="meta">{work.year}</p>}
                 </div>
-                <p class="meta mt-1">{pub.venue}</p>
+                <p class="meta mt-1">{work.venue}</p>
+                {work.links && (
+                  <p class="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs">
+                    {work.links.map((link) => (
+                      <a href={link.href} class={linkClass} target="_blank" rel="noopener">
+                        {link.label}<span class="sr-only"> (opens in a new tab)</span>
+                      </a>
+                    ))}
+                  </p>
+                )}
               </div>
             ))
           }
         </section>
 
         <section id="contact" class="mt-14 scroll-mt-8">
-          <p class="meta text-accent">05</p>
+          <p class="meta text-accent">{num('contact')}</p>
           <h2 class="font-display text-2xl text-ink mt-2">Contact</h2>
           <div class="mt-2">
-            <div class="border-t border-hairline py-4">
-              <p class="meta">Email</p>
-              <p class="mt-1 font-mono text-sm text-ink">{about.contact.email}</p>
-            </div>
-            <div class="border-t border-hairline py-4">
-              <p class="meta">Website</p>
-              <p class="mt-1 font-mono text-sm text-ink">{about.contact.website}</p>
-            </div>
-            <div class="border-t border-hairline py-4">
-              <p class="meta">Scholar</p>
-              <p class="mt-1 font-mono text-sm text-ink">{about.contact.scholar}</p>
-            </div>
+            {
+              about.contact.map((row) => (
+                <div class="border-t border-hairline py-4">
+                  <p class="meta">{row.label}</p>
+                  <p class="mt-1 font-mono text-sm text-ink">
+                    {row.href ? <a href={row.href} class={linkClass}>{row.value}</a> : row.value}
+                  </p>
+                </div>
+              ))
+            }
           </div>
         </section>
       </div>
@@ -253,10 +307,10 @@ const sections = [
       <p class="font-serif italic text-lg text-ink">
         Continue to <a
           href="/notes/"
-          class="text-accent underline decoration-hairline underline-offset-4 transition-colors hover:decoration-accent"
+          class={linkClass}
         >the notes</a>, or to the <a
           href="/register/"
-          class="text-accent underline decoration-hairline underline-offset-4 transition-colors hover:decoration-accent"
+          class={linkClass}
         >register of structures</a>.
       </p>
     </div>
