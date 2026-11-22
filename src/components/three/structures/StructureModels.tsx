@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Edges, Line } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
@@ -83,12 +83,33 @@ function ActiveGroup({
 /* 01 — The Dialectic Room                                            */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Where the room's attention is, in world space. While `engaged`, every
+ * occupied chair turns to face (x, z); once released, the chairs turn back to
+ * face each other. `snap` sets the yaw instantly on the next frame.
+ */
+export interface RoomAttention {
+  x: number;
+  z: number;
+  engaged: boolean;
+  snap?: boolean;
+  /** Draw sight lines from each occupied chair to (x, z). */
+  showLines?: boolean;
+}
+
+/** Shortest signed angle from `from` to `to`, in (−π, π]. */
+function angleDelta(from: number, to: number): number {
+  return Math.atan2(Math.sin(to - from), Math.cos(to - from));
+}
+
 export function DialecticRoomModel({
   active = false,
   explode = 0,
+  attention,
 }: {
   active?: boolean;
   explode?: number;
+  attention?: React.MutableRefObject<RoomAttention>;
 }) {
   const { plaster, accent } = getShared();
   const seatGeo = useMemo(() => new THREE.BoxGeometry(0.34, 0.06, 0.34), []);
@@ -110,18 +131,97 @@ export function DialecticRoomModel({
         key: slot,
         position: [x + Math.cos(angle) * outward, 0, z + Math.sin(angle) * outward] as Vec3,
         dir: [Math.cos(angle), Math.sin(angle)] as const,
-        rotationY: angle,
+        // A chair's front is its local −z; this yaw turns it to the centre.
+        rotationY: Math.PI / 2 - angle,
         accent: slot === ACCENT_SLOT,
       };
     });
   }, []);
 
   const ringRef = useRef<THREE.Group>(null);
+  const tiltRef = useRef<THREE.Group>(null);
   const chairRefs = useRef<Array<THREE.Group | null>>([]);
   const reduced = useReducedMotion();
   const explodeRef = useRef(explode);
   explodeRef.current = explode;
   const explodeAnim = useRef(0);
+  const focus = useMemo(() => new THREE.Vector3(), []);
+
+  // Sight lines: one hairline per occupied chair, seat → teacher.
+  const occupied = useMemo(() => chairs.filter((c) => c && !c.accent).length, [chairs]);
+  const sightGeo = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    const attr = new THREE.BufferAttribute(new Float32Array(occupied * 6), 3);
+    attr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('position', attr);
+    return geo;
+  }, [occupied]);
+  const sightMat = useMemo(
+    () =>
+      new THREE.LineBasicMaterial({
+        color: SCENE.palette.accent,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        toneMapped: false,
+      }),
+    [],
+  );
+  const sightRef = useRef<THREE.LineSegments>(null);
+  useEffect(
+    () => () => {
+      sightGeo.dispose();
+      sightMat.dispose();
+    },
+    [sightGeo, sightMat],
+  );
+
+  // The room's attention: chairs turn toward the "teacher", then back inward.
+  useFrame((_, delta) => {
+    const att = attention?.current;
+    const tilt = tiltRef.current;
+    if (reduced || !att || !tilt) return;
+
+    // Bring the world-space point into the ring's own (tilted, rotating) frame.
+    focus.set(att.x, 0, att.z);
+    tilt.worldToLocal(focus);
+
+    const lines = sightRef.current;
+    const pos = sightGeo.attributes.position as THREE.BufferAttribute;
+    let seg = 0;
+
+    chairs.forEach((chair, index) => {
+      const g = chairRefs.current[index];
+      // The empty chair has nobody in it, so it never turns.
+      if (!chair || !g || chair.accent) return;
+      // Sight line from the front edge of the seat to the teacher.
+      const fx = -Math.sin(g.rotation.y);
+      const fz = -Math.cos(g.rotation.y);
+      pos.setXYZ(seg * 2, g.position.x + fx * 0.17, 0.4, g.position.z + fz * 0.17);
+      pos.setXYZ(seg * 2 + 1, focus.x, focus.y + 0.01, focus.z);
+      seg += 1;
+      const dx = focus.x - g.position.x;
+      const dz = focus.z - g.position.z;
+      const dist = Math.hypot(dx, dz);
+      const target = att.engaged ? Math.atan2(-dx, -dz) : chair.rotationY;
+      if (att.snap) {
+        g.rotation.y = target;
+        return;
+      }
+      // Engaged: nearer chairs turn first. Released: the far side of the room
+      // lets go first, and the chairs nearest the teacher hold on longest.
+      const rate = att.engaged
+        ? 7 / (1 + dist * 0.45)
+        : 0.7 + 1.5 * Math.min(1, dist / 4.5);
+      g.rotation.y += angleDelta(g.rotation.y, target) * (1 - Math.exp(-rate * delta));
+    });
+    att.snap = false;
+
+    pos.needsUpdate = true;
+    const want = att.showLines ? 0.4 : 0;
+    sightMat.opacity = damp(sightMat.opacity, want, 1 - Math.exp(-(want ? 6 : 2.5) * delta));
+    if (lines) lines.visible = sightMat.opacity > 0.01;
+  });
 
   useFrame((_, delta) => {
     const ring = ringRef.current;
@@ -154,7 +254,16 @@ export function DialecticRoomModel({
   return (
     <ActiveGroup active={active}>
       <group ref={ringRef}>
-        <group rotation-x={0.105}>
+        <group ref={tiltRef} rotation-x={0.105}>
+          {attention && (
+            <lineSegments
+              ref={sightRef}
+              geometry={sightGeo}
+              material={sightMat}
+              visible={false}
+              frustumCulled={false}
+            />
+          )}
           {chairs.map(
             (chair, index) =>
               chair && (
