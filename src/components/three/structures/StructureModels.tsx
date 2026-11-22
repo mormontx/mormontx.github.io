@@ -109,7 +109,7 @@ export function DialecticRoomModel({
 }: {
   active?: boolean;
   explode?: number;
-  attention?: React.MutableRefObject<RoomAttention>;
+  attention?: React.RefObject<RoomAttention>;
 }) {
   const { plaster, accent } = getShared();
   const seatGeo = useMemo(() => new THREE.BoxGeometry(0.34, 0.06, 0.34), []);

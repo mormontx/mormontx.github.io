@@ -27,6 +27,11 @@
     outline-offset: 2px;
   }
 
+  /* The hidden attribute wins over display utilities like flex. */
+  [hidden] {
+    display: none !important;
+  }
+
   /* Thin warm-grey scrollbar */
   * {
     scrollbar-width: thin;

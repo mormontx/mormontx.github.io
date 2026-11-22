@@ -1,0 +1,434 @@
+---
+/**
+ * FIG. 01 on Scaffolding Silence. Above: the term as a score, speaking turns
+ * as ticks and timed gaps bracketed below the line. Below: the interval now.
+ * Strike the bell and the silence starts; a quiet student's idea assembles
+ * while it holds. Say something (or explain the pause) and it falls. Hold it
+ * and the idea arrives whole, and the room needs a little less time next round.
+ * The build paints the term before the rule, so the figure reads without JS.
+ */
+import {
+  bayPath,
+  clock,
+  envelopePath,
+  SCORE_START,
+  scoreMarkup,
+  SILENCE,
+  silenceNote,
+} from '../../lib/silence';
+
+const S = SILENCE;
+const T = S.tower;
+const W = S.wave;
+const top = T.base - T.bays * T.bay;
+const note = silenceNote({ phase: 'idle', p: 0, held: 0, need: S.firstNeed });
+const btn =
+  'meta inline-flex min-h-[44px] items-center border px-3 py-2 transition-colors hover:border-accent hover:text-accent';
+---
+
+<figure class="plate" data-silence>
+  <!-- the term, as a score -->
+  <svg
+    viewBox="0 0 800 146"
+    class="sil-svg block h-auto w-full"
+    role="img"
+    aria-label="The term as a score: speaking turns as ticks above the line, timed silences bracketed below it, whole ideas marked tall."
+  >
+    <text x={S.score.left} y="24" class="sil-label">SCORE · ONE TERM</text>
+    <text x={S.score.right} y="24" text-anchor="end" class="sil-label" data-round>BEFORE THE BELL</text>
+    <line x1={S.score.left} y1={S.score.base} x2={S.score.right} y2={S.score.base} class="stroke-ink" stroke-width="1"></line>
+    <g data-score set:html={scoreMarkup(SCORE_START)}></g>
+  </svg>
+
+  <!-- phone: the clock moves out of the drawing so it stays legible -->
+  <p class="mt-3 flex items-baseline gap-3 border-t border-hairline pt-3 sm:hidden">
+    <span class="font-mono text-3xl tabular-nums text-ink" data-clock>0:00</span>
+    <span class="meta" data-need>of {clock(S.firstNeed)}</span>
+  </p>
+
+  <!-- the interval now -->
+  <svg
+    viewBox="0 146 800 194"
+    class="sil-svg block h-auto w-full"
+    role="img"
+    aria-label="The interval now: a bell, its ring decaying across the silence, and an idea assembling while the silence holds."
+    data-interval-svg
+  >
+    <line x1={S.score.left} y1="150" x2={S.score.right} y2="150" class="sil-wide stroke-hairline" stroke-width="1"></line>
+    <g class="sil-wide">
+      <text x={S.score.left} y="182" class="sil-label">INTERVAL · CLOCK ×{S.speed}</text>
+      <text x={S.score.left} y="226" class="sil-clock" data-clock>0:00</text>
+      <text x={S.score.left} y="250" class="sil-label" data-need>OF {clock(S.firstNeed)}</text>
+    </g>
+
+    <!-- the bell, struck at both ends of the silence -->
+    <g transform={`translate(${S.bell.x} ${S.bell.y})`}>
+      <g data-bell-swing>
+        <line x1="0" y1="-20" x2="0" y2="-31" class="stroke-ink" stroke-width="1.25"></line>
+        <circle cx="0" cy="-34" r="3.5" class="fill-paper stroke-ink" stroke-width="1.25"></circle>
+        <path d="M -15 10 C -15 -8 -9 -20 0 -20 C 9 -20 15 -8 15 10 L 19 15 L -19 15 Z" class="fill-paper stroke-ink" stroke-width="1.25"></path>
+        <circle cx="0" cy="19" r="3" class="fill-accent"></circle>
+      </g>
+    </g>
+
+    <!-- its ring, decaying across the interval -->
+    <path d={envelopePath()} fill="none" class="stroke-hairline" stroke-width="1" stroke-dasharray="2 4"></path>
+    <line x1={W.left} y1={W.y} x2={W.right} y2={W.y} class="stroke-hairline" stroke-width="1"></line>
+    <polyline points="" fill="none" class="stroke-accent" stroke-width="1" stroke-linejoin="round" data-wave></polyline>
+    <line x1={W.left} y1={W.y - 40} x2={W.left} y2={W.y + 40} class="stroke-mute" stroke-width="0.75"></line>
+    <line x1={W.right} y1={W.y - 40} x2={W.right} y2={W.y + 40} class="stroke-mute" stroke-width="0.75" stroke-dasharray="3 3"></line>
+    <text x={W.left} y="326" class="sil-label">0:00 · BELL</text>
+    <text x={W.right} y="326" text-anchor="end" class="sil-label" data-end-label>{clock(S.firstNeed)} · BELL</text>
+
+    <!-- the idea: a scaffold that only goes up while the room is quiet -->
+    {
+      Array.from({ length: T.bays }, (_, i) => (
+        <path d={bayPath(i)} fill="none" class="stroke-hairline" stroke-width="1" stroke-dasharray="2 3"></path>
+      ))
+    }
+    {
+      Array.from({ length: T.bays }, (_, i) => (
+        <path d={bayPath(i)} fill="none" class="sil-bay" stroke-width="1.25" style={`--i:${i}`} data-bay={i}></path>
+      ))
+    }
+    <rect x={T.x + T.width / 2 - 6} y={top - 14} width="12" height="12" class="sil-cap fill-accent" data-cap></rect>
+    <line x1={T.x - 12} y1={T.base} x2={T.x + T.width + 12} y2={T.base} class="stroke-ink" stroke-width="1"></line>
+    <text x={T.x + T.width / 2} y="326" text-anchor="middle" class="sil-label" data-tower-label>AN IDEA · 0/{T.bays}</text>
+  </svg>
+
+  <div class="mt-4 flex flex-wrap items-center gap-2" hidden data-sil-controls>
+    <button type="button" class:list={[btn, 'border-accent text-accent']} data-act="strike">Strike the bell</button>
+    <button type="button" class:list={[btn, 'border-hairline']} hidden data-act="speak">Say something</button>
+    <button type="button" class:list={[btn, 'border-hairline']} hidden data-act="narrate">Explain the pause</button>
+    <button type="button" class:list={[btn, 'ml-auto border-transparent']} aria-pressed="true" data-act="sound">Sound on</button>
+  </div>
+
+  <dl class="mt-4 grid grid-cols-3 gap-x-6 gap-y-3 border-t border-hairline pt-4">
+    <div>
+      <dt class="meta">Silences held</dt>
+      <dd class="mt-1 font-mono text-sm tabular-nums text-ink" data-readout="held">0</dd>
+    </div>
+    <div>
+      <dt class="meta">Filled</dt>
+      <dd class="mt-1 font-mono text-sm tabular-nums text-ink" data-readout="filled">0</dd>
+    </div>
+    <div>
+      <dt class="meta">Room needs</dt>
+      <dd class="mt-1 font-mono text-sm tabular-nums text-ink" data-readout="need">{clock(S.firstNeed)}</dd>
+    </div>
+  </dl>
+  <p class="mt-3 font-serif text-base italic text-mute" aria-live="polite" data-readout="note">{note}</p>
+
+  <figcaption>
+    <span>FIG. 01 — A SILENCE, TIMED, AND WHAT IT HOLDS UP</span>
+    <span>SCALE: 1 S = {S.speed} S</span>
+  </figcaption>
+</figure>
+
+<style>
+  .sil-svg :global(.sil-voice) {
+    stroke: theme('colors.ink');
+    stroke-width: 1;
+  }
+  .sil-svg :global(.sil-teacher) {
+    stroke: theme('colors.mute');
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+  }
+  .sil-svg :global(.sil-idea) {
+    stroke: theme('colors.accent');
+    stroke-width: 1.5;
+  }
+  .sil-svg :global(.sil-idea-cap),
+  .sil-svg :global(.sil-bell) {
+    fill: theme('colors.accent');
+  }
+  .sil-svg :global(.sil-gap) {
+    fill: none;
+    stroke: theme('colors.ink');
+    stroke-width: 0.75;
+    stroke-linejoin: round;
+  }
+  .sil-svg :global(.sil-gap.is-filled) {
+    stroke: theme('colors.mute');
+    stroke-dasharray: 2 3;
+  }
+  .sil-svg :global(.sil-gap-label) {
+    font-family: theme('fontFamily.mono');
+    font-size: 11px;
+    fill: theme('colors.ink');
+  }
+  .sil-svg :global(.sil-gap-label.is-filled) {
+    fill: theme('colors.mute');
+  }
+  .sil-label {
+    font-family: theme('fontFamily.mono');
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    fill: theme('colors.mute');
+  }
+  .sil-clock {
+    font-family: theme('fontFamily.mono');
+    font-size: 40px;
+    font-variant-numeric: tabular-nums;
+    fill: theme('colors.ink');
+  }
+  .sil-bay {
+    stroke: theme('colors.ink');
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+  }
+  .sil-bay.is-built {
+    opacity: 1;
+    transition: opacity 0.35s ease-out;
+  }
+  .sil-bay.is-falling {
+    opacity: 0;
+    transform: translate(calc(var(--i) * 5px), 46px) rotate(calc(10deg + var(--i) * 4deg));
+    transition:
+      opacity 0.8s ease-in,
+      transform 0.8s cubic-bezier(0.5, 0, 0.9, 0.4);
+    transition-delay: calc((5 - var(--i)) * 40ms);
+  }
+  [data-silence-whole] .sil-bay {
+    stroke: theme('colors.accent');
+  }
+  .sil-cap {
+    opacity: 0;
+    transition: opacity 0.4s ease-out;
+  }
+  [data-silence-whole] .sil-cap {
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sil-bay.is-falling {
+      transform: none;
+      transition: opacity 0.2s;
+    }
+  }
+  /* Phone width: svg text gets too small; the clock moves into the page
+     above the drawing, and the readout carries the rest. */
+  @media (max-width: 639px) {
+    .sil-label,
+    .sil-wide,
+    .sil-svg :global(.sil-gap-label) {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import {
+    clock,
+    SCORE_START,
+    scoreMarkup,
+    SILENCE,
+    silenceNote,
+    voiceHeight,
+    wavePoints,
+    type Phase,
+    type ScoreEvent,
+  } from '../../lib/silence';
+
+  const S = SILENCE;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  /** A small brass bell: a few inharmonic partials, each decaying on its own. */
+  function ring(ctx: AudioContext, gain = 0.16) {
+    const t0 = ctx.currentTime + 0.01;
+    const out = ctx.createGain();
+    out.gain.value = gain;
+    out.connect(ctx.destination);
+    const f0 = 1046.5;
+    const partials: Array<[number, number, number]> = [
+      [1, 1, 2.8],
+      [2.32, 0.45, 1.6],
+      [4.25, 0.22, 0.9],
+      [6.63, 0.1, 0.5],
+    ];
+    for (const [ratio, amp, decay] of partials) {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = f0 * ratio;
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0.0001, t0);
+      env.gain.exponentialRampToValueAtTime(amp, t0 + 0.005);
+      env.gain.exponentialRampToValueAtTime(0.0001, t0 + decay * 2);
+      osc.connect(env).connect(out);
+      osc.start(t0);
+      osc.stop(t0 + decay * 2 + 0.05);
+    }
+  }
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-silence]')) {
+    const q = <T extends Element>(sel: string) => root.querySelector<T>(sel)!;
+    const score = q<SVGGElement>('[data-score]');
+    const round = q<SVGTextElement>('[data-round]');
+    const clocks = [...root.querySelectorAll<Element>('[data-clock]')];
+    const needs = [...root.querySelectorAll<Element>('[data-need]')];
+    const setClock = (text: string) => clocks.forEach((c) => (c.textContent = text));
+    const setNeed = (sec: number) =>
+      needs.forEach((n) => (n.textContent = n instanceof SVGElement ? `OF ${clock(sec)}` : `of ${clock(sec)}`));
+    const interval = q<SVGSVGElement>('[data-interval-svg]');
+    const phone = window.matchMedia('(max-width: 639px)');
+    const fit = () => interval.setAttribute('viewBox', phone.matches ? '160 140 572 176' : '0 146 800 194');
+    fit();
+    phone.addEventListener('change', fit);
+    const endLabel = q<SVGTextElement>('[data-end-label]');
+    const wave = q<SVGPolylineElement>('[data-wave]');
+    const swing = q<SVGGElement>('[data-bell-swing]');
+    const bays = [...root.querySelectorAll<SVGPathElement>('[data-bay]')];
+    const towerLabel = q<SVGTextElement>('[data-tower-label]');
+    const strike = q<HTMLButtonElement>('[data-act="strike"]');
+    const speak = q<HTMLButtonElement>('[data-act="speak"]');
+    const narrate = q<HTMLButtonElement>('[data-act="narrate"]');
+    const sound = q<HTMLButtonElement>('[data-act="sound"]');
+    const out = (key: string) => q<HTMLElement>(`[data-readout="${key}"]`);
+
+    const events: ScoreEvent[] = [...SCORE_START];
+    let phase: Phase = 'idle';
+    let held = 0;
+    let filled = 0;
+    let rounds = 0;
+    let voices = events.length;
+    let need: number = S.firstNeed;
+    let start = 0;
+    let ringAt = -Infinity;
+    let raf = 0;
+    let audio: AudioContext | null = null;
+    let soundOn = true;
+    let lastNote = '';
+
+    const note = (p = 0) => {
+      const text = silenceNote({ phase, p, held, need });
+      if (text !== lastNote) out('note').textContent = lastNote = text;
+    };
+
+    const bell = () => {
+      ringAt = performance.now();
+      if (soundOn && audio) ring(audio);
+      tick();
+    };
+
+    const built = (n: number) => {
+      bays.forEach((b, i) => {
+        b.classList.remove('is-falling');
+        b.classList.toggle('is-built', i < n);
+      });
+      towerLabel.textContent = `AN IDEA · ${n}/${bays.length}`;
+    };
+
+    const renderScore = () => {
+      score.innerHTML = scoreMarkup(events);
+      round.textContent = `ROUND ${rounds}`;
+      out('held').textContent = String(held);
+      out('filled').textContent = String(filled);
+      out('need').textContent = clock(need);
+    };
+
+    const setButtons = () => {
+      const running = phase === 'silence';
+      speak.hidden = !running;
+      narrate.hidden = !running;
+      // Keep focus on the strike button while it waits, but make it inert.
+      strike.setAttribute('aria-disabled', String(running));
+      if (!running) strike.textContent = 'Strike the bell';
+    };
+
+    /** One loop for the clock, the ring and the bell's swing; idles when done. */
+    function tick() {
+      if (raf) return;
+      raf = requestAnimationFrame(frame);
+    }
+    function frame(now: number) {
+      raf = 0;
+      const since = (now - ringAt) / 1000;
+      if (!reduced.matches && since < 3) {
+        const angle = 16 * Math.exp(-since / 0.7) * Math.sin(2 * Math.PI * 2.4 * since);
+        swing.setAttribute('transform', `rotate(${angle.toFixed(2)} 0 -34)`);
+      } else {
+        swing.removeAttribute('transform');
+      }
+      if (phase === 'silence') {
+        const elapsed = ((now - start) / 1000) * S.speed;
+        const p = Math.min(1, elapsed / need);
+        setClock(clock(elapsed));
+        strike.textContent = `Holding · ${clock(need - elapsed)} left`;
+        wave.setAttribute('points', wavePoints(p));
+        built(Math.floor(p * bays.length + 1e-6));
+        note(p);
+        if (p >= 1) hold();
+      }
+      if (phase === 'silence' || since < 3) tick();
+    }
+
+    const begin = () => {
+      if (phase === 'silence') return;
+      if (soundOn && !audio) {
+        try {
+          audio = new AudioContext();
+        } catch {
+          audio = null;
+        }
+      }
+      void audio?.resume();
+      phase = 'silence';
+      start = performance.now();
+      rounds += 1;
+      root.removeAttribute('data-silence-whole');
+      wave.setAttribute('points', '');
+      built(0);
+      setClock('0:00');
+      setNeed(need);
+      endLabel.textContent = `${clock(need)} · BELL`;
+      round.textContent = `ROUND ${rounds}`;
+      setButtons();
+      note(0);
+      bell();
+    };
+
+    function hold() {
+      phase = 'held';
+      held += 1;
+      events.push({ kind: 'silence', dur: need, held: true }, { kind: 'idea', dur: 30 });
+      setClock(clock(need));
+      need = Math.max(S.minNeed, need - S.learn);
+      root.setAttribute('data-silence-whole', '');
+      towerLabel.textContent = 'A WHOLE IDEA';
+      renderScore();
+      setButtons();
+      note(1);
+      bell();
+    }
+
+    const fill = (who: 'speak' | 'narrate') => {
+      if (phase !== 'silence') return;
+      const elapsed = Math.min(need, ((performance.now() - start) / 1000) * S.speed);
+      phase = who === 'speak' ? 'filled' : 'narrated';
+      filled += 1;
+      events.push(
+        { kind: 'silence', dur: Math.max(4, elapsed), held: false },
+        who === 'speak' ? { kind: 'voice', dur: 20, h: voiceHeight(voices++) } : { kind: 'teacher', dur: 20 },
+      );
+      // Whatever was built comes down.
+      for (const b of bays) if (b.classList.contains('is-built')) b.classList.add('is-falling');
+      towerLabel.textContent = 'AN IDEA · FELL';
+      renderScore();
+      setButtons();
+      strike.focus();
+      note();
+    };
+
+    strike.addEventListener('click', begin);
+    speak.addEventListener('click', () => fill('speak'));
+    narrate.addEventListener('click', () => fill('narrate'));
+    sound.addEventListener('click', () => {
+      soundOn = !soundOn;
+      sound.setAttribute('aria-pressed', String(soundOn));
+      sound.textContent = soundOn ? 'Sound on' : 'Sound off';
+    });
+
+    q<HTMLElement>('[data-sil-controls]').removeAttribute('hidden');
+  }
+</script>

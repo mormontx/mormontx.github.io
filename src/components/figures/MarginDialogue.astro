@@ -1,0 +1,496 @@
+---
+/**
+ * FIG. 01 on Marginalia as Dialogue: a page proof of one paragraph across five
+ * drafts. You are the reader. Ask a question in the margin and an answer comes
+ * back in a smaller hand; the next draft rewrites the sentence you asked
+ * about. Write a grade instead and the student reads the number and nothing
+ * else. The build paints the first draft, so the page reads without JS.
+ */
+import { DRAFTS, ESSAY_TITLE, marginStatus, paragraphHTML } from '../../lib/marginalia';
+
+const first = DRAFTS[0];
+const btn =
+  'meta inline-flex min-h-[44px] items-center border px-3 py-2 transition-colors hover:border-accent hover:text-accent';
+const greek = [100, 97, 64];
+---
+
+<figure class="plate" data-margin>
+  <div class="mg-page relative border border-hairline bg-paper px-4 py-5 sm:px-6 sm:py-6" data-page>
+    <div class="meta flex justify-between gap-4">
+      <span>P. 1</span>
+      <span data-draft-label>TOK essay · Draft 1 of {DRAFTS.length}</span>
+    </div>
+
+    <div class="mt-5 grid gap-x-8 sm:grid-cols-[minmax(0,1fr)_13rem]" data-grid>
+      <div class="relative min-w-0" data-text-col>
+        <p class="font-serif text-lg italic leading-snug text-ink">{ESSAY_TITLE}</p>
+        <div
+          class="mg-para mt-3 space-y-3 font-serif text-base leading-relaxed text-ink/85"
+          data-para
+          set:html={paragraphHTML(0, { target: first.question?.anchor })}
+        />
+        <div class="mt-5 space-y-3" aria-hidden="true">
+          {greek.map((w) => (w ? <div class="h-px bg-hairline" style={`width:${w}%`} /> : <div class="h-2" />))}
+        </div>
+        <p class="mg-stamp" hidden data-stamp>
+          <span class="sr-only">Grade: </span><span data-grade>{first.grade}</span>
+        </p>
+      </div>
+
+      <div
+        class="mg-margin relative mt-6 border-t border-dashed border-hairline pt-3 sm:mt-0 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0"
+        aria-live="polite"
+        data-margin-col
+      >
+        <p class="meta sm:hidden">Margin</p>
+      </div>
+    </div>
+
+    <svg class="pointer-events-none absolute inset-0 h-full w-full text-mute max-sm:hidden" aria-hidden="true" data-leaders></svg>
+  </div>
+
+  <div class="mt-4 flex flex-wrap items-center gap-2" hidden data-mg-controls>
+    <button type="button" class:list={[btn, 'border-accent text-accent']} data-act="ask">Ask in the margin</button>
+    <button type="button" class:list={[btn, 'border-hairline']} data-act="grade">Write a grade</button>
+    <button type="button" class:list={[btn, 'border-accent text-accent']} hidden data-act="next">Read the next draft →</button>
+    <button type="button" class:list={[btn, 'border-hairline']} hidden data-act="pen">Put away the red pen</button>
+    <button type="button" class:list={[btn, 'border-hairline']} hidden data-act="final">Write the final grade</button>
+    <button type="button" class:list={[btn, 'border-hairline']} hidden data-act="restart">Start over</button>
+  </div>
+
+  <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-hairline pt-4 sm:grid-cols-4">
+    <div>
+      <dt class="meta">Draft</dt>
+      <dd class="mt-1 font-mono text-sm tabular-nums text-ink" data-readout="draft">1 of {DRAFTS.length}</dd>
+    </div>
+    <div>
+      <dt class="meta">Questions</dt>
+      <dd class="mt-1 font-mono text-sm tabular-nums text-ink" data-readout="questions">0</dd>
+    </div>
+    <div>
+      <dt class="meta">Replies</dt>
+      <dd class="mt-1 font-mono text-sm tabular-nums text-ink" data-readout="replies">0</dd>
+    </div>
+    <div>
+      <dt class="meta">Grades</dt>
+      <dd class="mt-1 font-mono text-sm tabular-nums text-ink" data-readout="grades">0</dd>
+    </div>
+  </dl>
+
+  <div class="mt-4">
+    <p class="meta">Whose hand fills the margin</p>
+    <div class="mt-2 flex h-1.5 w-full overflow-hidden bg-hairline" aria-hidden="true">
+      <span class="mg-share bg-mute" style="width:0%" data-share="teacher"></span>
+      <span class="mg-share mg-share-student" style="width:0%" data-share="student"></span>
+      <span class="mg-share bg-ink" style="width:0%" data-share="peer"></span>
+    </div>
+    <p class="mt-2 font-mono text-xs tabular-nums text-mute" data-share-text>The margin is empty.</p>
+  </div>
+
+  <p class="mt-3 font-serif text-base italic text-mute" data-readout="note">{marginStatus('choose', 0)}</p>
+
+  <figcaption>
+    <span>FIG. 01 — FEEDBACK AS CORRESPONDENCE</span>
+    <span>PENCIL, NOT PEN</span>
+  </figcaption>
+</figure>
+
+<style>
+  /* The student's hand: the accent, deepened a little so small text reads. */
+  .mg-page,
+  .mg-share-student {
+    --student: color-mix(in srgb, theme('colors.accent') 82%, theme('colors.ink'));
+  }
+  .mg-share-student {
+    background: var(--student);
+  }
+  .mg-share {
+    transition: width 0.6s ease-out;
+  }
+  .mg-para :global(.mg-ref) {
+    display: none;
+    margin-left: 0.15em;
+    font-family: theme('fontFamily.mono');
+    font-size: 0.65em;
+    color: theme('colors.mute');
+  }
+  .mg-para :global(.has-note .mg-ref),
+  .mg-para :global(.is-target .mg-ref) {
+    display: inline;
+  }
+  /* Pencil marks: a soft underline where a note was written, a firmer one
+     where the reader's pencil is hovering now. */
+  .mg-para :global(.has-note) {
+    text-decoration: underline;
+    text-decoration-color: theme('colors.hairline');
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+  }
+  .mg-para :global(.is-target) {
+    text-decoration: underline dotted;
+    text-decoration-color: theme('colors.mute');
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+  }
+  .mg-para :global(.mg-del) {
+    color: theme('colors.mute');
+    text-decoration: line-through;
+    text-decoration-color: theme('colors.mute');
+    font-size: 0.92em;
+  }
+  .mg-para :global(.mg-ins) {
+    text-decoration: none;
+    background: color-mix(in srgb, theme('colors.accent') 9%, transparent);
+    animation: mg-ins 1.6s ease-out both;
+  }
+  @keyframes mg-ins {
+    from { background: color-mix(in srgb, theme('colors.accent') 28%, transparent); }
+  }
+
+  /* Margin notes. Phone: in flow under the text. Wider: placed against their
+     sentence by the script. */
+  .mg-margin :global(.mg-note) {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-family: theme('fontFamily.serif');
+    font-style: italic;
+    line-height: 1.35;
+  }
+  .mg-margin :global(.mg-note-ref) {
+    flex: none;
+    padding-top: 0.2em;
+    font-family: theme('fontFamily.mono');
+    font-style: normal;
+    font-size: 0.65rem;
+    color: theme('colors.mute');
+  }
+  .mg-margin :global(.mg-note-body) {
+    position: relative;
+    display: block;
+    min-width: 0;
+  }
+  .mg-margin :global(.mg-ghost) {
+    visibility: hidden;
+  }
+  .mg-margin :global(.mg-ink) {
+    position: absolute;
+    inset: 0;
+  }
+  .mg-margin :global(.mg-note.is-teacher) {
+    font-size: 0.95rem;
+    color: theme('colors.mute');
+    transform: rotate(-0.6deg);
+  }
+  .mg-margin :global(.mg-note.is-student) {
+    margin-top: 0.35rem;
+    padding-left: 0.6rem;
+    font-size: 0.82rem;
+    color: var(--student);
+    transform: rotate(0.4deg);
+  }
+  .mg-margin :global(.mg-note.is-peer) {
+    font-family: theme('fontFamily.display');
+    font-size: 0.85rem;
+    color: theme('colors.ink');
+    transform: rotate(-1.2deg);
+  }
+  .mg-margin :global(.mg-note.is-old) {
+    opacity: 0.6;
+  }
+  @media (min-width: 640px) {
+    .mg-margin :global(.mg-note) {
+      position: absolute;
+      left: 1rem;
+      right: 0;
+      margin-top: 0;
+    }
+  }
+
+  /* The red pen. */
+  .mg-stamp {
+    position: absolute;
+    top: -1.75rem;
+    right: 0.25rem;
+    display: grid;
+    place-items: center;
+    width: 4.25rem;
+    height: 4.25rem;
+    border: 1.5px solid theme('colors.accent');
+    border-radius: 50% 46% 52% 48%;
+    font-family: theme('fontFamily.display');
+    font-style: italic;
+    font-size: 2rem;
+    line-height: 1;
+    color: theme('colors.accent');
+    transform: rotate(-8deg);
+    background: color-mix(in srgb, theme('colors.paper') 70%, transparent);
+  }
+  .mg-stamp.is-final {
+    top: auto;
+    bottom: -0.25rem;
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.35rem;
+  }
+  [data-graded] .mg-para,
+  [data-graded] [data-margin-col] {
+    opacity: 0.4;
+    transition: opacity 0.5s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mg-para :global(.mg-ins) {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  import {
+    DRAFTS,
+    marginStatus,
+    paragraphHTML,
+    words,
+    type MarginNote,
+    type MarginPhase,
+  } from '../../lib/marginalia';
+
+  const CHARS_PER_SEC = 42;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const wide = window.matchMedia('(min-width: 640px)');
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, reduced.matches ? 0 : ms));
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-margin]')) {
+    const q = <T extends Element>(sel: string) => root.querySelector<T>(sel)!;
+    const page = q<HTMLElement>('[data-page]');
+    const para = q<HTMLElement>('[data-para]');
+    const textCol = q<HTMLElement>('[data-text-col]');
+    const margin = q<HTMLElement>('[data-margin-col]');
+    const leaders = q<SVGSVGElement>('[data-leaders]');
+    const stamp = q<HTMLElement>('[data-stamp]');
+    const gradeText = q<HTMLElement>('[data-grade]');
+    const draftLabel = q<HTMLElement>('[data-draft-label]');
+    const controls = q<HTMLElement>('[data-mg-controls]');
+    const buttons = Object.fromEntries(
+      [...root.querySelectorAll<HTMLButtonElement>('[data-act]')].map((b) => [b.dataset.act!, b]),
+    ) as Record<'ask' | 'grade' | 'next' | 'pen' | 'final' | 'restart', HTMLButtonElement>;
+    const out = (key: string) => q<HTMLElement>(`[data-readout="${key}"]`);
+
+    interface Placed extends MarginNote {
+      el: HTMLElement;
+      draft: number;
+    }
+
+    let draft = 0;
+    let phase: MarginPhase = 'choose';
+    let notes: Placed[] = [];
+    let questions = 0;
+    let replies = 0;
+    let grades = 0;
+    let run = 0; // bumps on restart so stale typing stops
+
+    const noted = () => new Set(notes.map((n) => n.anchor));
+
+    const renderPara = () => {
+      const target = phase === 'choose' ? DRAFTS[draft].question?.anchor ?? null : null;
+      para.innerHTML = paragraphHTML(draft, { target, noted: noted() });
+    };
+
+    /** Place each note against its sentence, never overlapping the one above. */
+    const layout = () => {
+      leaders.innerHTML = '';
+      if (!wide.matches) {
+        for (const n of notes) n.el.style.top = '';
+        margin.style.minHeight = '';
+        return;
+      }
+      const m = margin.getBoundingClientRect();
+      const p = page.getBoundingClientRect();
+      const textRight = textCol.getBoundingClientRect().right - p.left;
+      let floor = 0;
+      const paths: string[] = [];
+      for (const n of notes) {
+        const s = para.querySelector<HTMLElement>(`[data-s="${n.anchor}"]`);
+        const line = s?.getClientRects()[0];
+        const anchorTop = line ? line.top - m.top - 2 : floor;
+        const top = Math.max(anchorTop, floor);
+        n.el.style.top = `${top}px`;
+        floor = top + n.el.offsetHeight + (n.hand === 'teacher' ? 4 : 10);
+        if (n.hand !== 'student' && line) {
+          const x1 = textRight + 4;
+          const y1 = line.top - p.top + line.height * 0.6;
+          const x2 = m.left - p.left + 12;
+          const y2 = m.top - p.top + top + 10;
+          paths.push(
+            `<path d="M ${x1} ${y1} C ${x1 + 16} ${y1}, ${x2 - 16} ${y2}, ${x2} ${y2}" fill="none" stroke="currentColor" stroke-width="0.75" opacity="${n.draft === draft ? 0.8 : 0.35}"/>`,
+          );
+        }
+      }
+      margin.style.minHeight = `${floor}px`;
+      leaders.innerHTML = paths.join('');
+    };
+
+    const addNote = (note: MarginNote): Placed => {
+      const el = document.createElement('p');
+      el.className = `mg-note is-${note.hand}`;
+      const ref = document.createElement('span');
+      ref.className = 'mg-note-ref';
+      ref.textContent = String(note.anchor + 1);
+      const body = document.createElement('span');
+      body.className = 'mg-note-body';
+      const ghost = document.createElement('span');
+      ghost.className = 'mg-ghost';
+      ghost.setAttribute('aria-hidden', 'true');
+      ghost.textContent = note.text;
+      const ink = document.createElement('span');
+      ink.className = 'mg-ink';
+      body.append(ghost, ink);
+      el.append(ref, body);
+      margin.append(el);
+      const placed = { ...note, el, draft };
+      notes.push(placed);
+      layout();
+      return placed;
+    };
+
+    /** Write a note at handwriting pace. */
+    const write = async (note: MarginNote, token: number) => {
+      const placed = addNote(note);
+      const ink = placed.el.querySelector<HTMLElement>('.mg-ink')!;
+      if (reduced.matches) {
+        ink.textContent = note.text;
+      } else {
+        const start = performance.now();
+        await new Promise<void>((done) => {
+          const step = (now: number) => {
+            if (token !== run) return done();
+            const n = Math.min(note.text.length, Math.floor(((now - start) / 1000) * CHARS_PER_SEC));
+            ink.textContent = note.text.slice(0, n);
+            if (n < note.text.length) requestAnimationFrame(step);
+            else done();
+          };
+          requestAnimationFrame(step);
+        });
+      }
+      share();
+    };
+
+    const share = () => {
+      const count = { teacher: 0, student: 0, peer: 0 };
+      for (const n of notes) count[n.hand] += words(n.text);
+      const total = count.teacher + count.student + count.peer;
+      for (const hand of ['teacher', 'student', 'peer'] as const) {
+        q<HTMLElement>(`[data-share="${hand}"]`).style.width = total ? `${(count[hand] / total) * 100}%` : '0%';
+      }
+      const pct = (v: number) => Math.round((v / (total || 1)) * 100);
+      q<HTMLElement>('[data-share-text]').textContent = total
+        ? `Teacher ${pct(count.teacher)}% · Student ${pct(count.student)}%${count.peer ? ` · Classmate ${pct(count.peer)}%` : ''}`
+        : 'The margin is empty.';
+    };
+
+    const show = (...acts: Array<keyof typeof buttons>) => {
+      const hadFocus = controls.contains(document.activeElement);
+      for (const [key, b] of Object.entries(buttons)) b.hidden = !acts.includes(key as keyof typeof buttons);
+      if (hadFocus && acts.length) buttons[acts[0]].focus();
+    };
+
+    const sync = () => {
+      out('draft').textContent = `${draft + 1} of ${DRAFTS.length}`;
+      out('questions').textContent = String(questions);
+      out('replies').textContent = String(replies);
+      out('grades').textContent = String(grades);
+      out('note').textContent = marginStatus(phase, draft);
+      draftLabel.textContent = `TOK essay · Draft ${draft + 1} of ${DRAFTS.length}`;
+    };
+
+    const setPhase = (next: MarginPhase) => {
+      phase = next;
+      renderPara();
+      sync();
+      layout();
+    };
+
+    const ask = async () => {
+      const qn = DRAFTS[draft].question;
+      if (!qn || phase !== 'choose') return;
+      const token = run;
+      setPhase('writing');
+      show();
+      controls.setAttribute('aria-busy', 'true');
+      questions += 1;
+      sync();
+      await write({ hand: 'teacher', anchor: qn.anchor, text: qn.text }, token);
+      await wait(700);
+      if (token !== run) return;
+      replies += 1;
+      await write({ hand: 'student', anchor: qn.anchor, text: qn.reply }, token);
+      if (token !== run) return;
+      controls.removeAttribute('aria-busy');
+      setPhase('answered');
+      buttons.next.textContent = `Read draft ${draft + 2} →`;
+      show('next');
+    };
+
+    const nextDraft = async () => {
+      if (phase !== 'answered') return;
+      const token = run;
+      for (const n of notes) n.el.classList.add('is-old');
+      draft += 1;
+      const d = DRAFTS[draft];
+      setPhase(d.question ? 'choose' : 'final');
+      show();
+      for (const note of d.arrives ?? []) {
+        await wait(500);
+        if (token !== run) return;
+        await write(note, token);
+      }
+      if (token !== run) return;
+      renderPara();
+      layout();
+      if (d.question) show('ask', 'grade');
+      else show('final', 'restart');
+    };
+
+    const grade = (final: boolean) => {
+      grades += 1;
+      gradeText.textContent = DRAFTS[draft].grade;
+      stamp.hidden = false;
+      stamp.classList.toggle('is-final', final);
+      if (!final) page.setAttribute('data-graded', '');
+      setPhase(final ? 'final-graded' : 'graded');
+      show(final ? 'restart' : 'pen');
+    };
+
+    const penAway = () => {
+      stamp.hidden = true;
+      page.removeAttribute('data-graded');
+      setPhase('choose');
+      show('ask', 'grade');
+    };
+
+    const restart = () => {
+      run += 1;
+      for (const n of notes) n.el.remove();
+      notes = [];
+      draft = 0;
+      questions = replies = grades = 0;
+      stamp.hidden = true;
+      page.removeAttribute('data-graded');
+      controls.removeAttribute('aria-busy');
+      share();
+      setPhase('choose');
+      show('ask', 'grade');
+    };
+
+    buttons.ask.addEventListener('click', ask);
+    buttons.grade.addEventListener('click', () => grade(false));
+    buttons.next.addEventListener('click', nextDraft);
+    buttons.pen.addEventListener('click', penAway);
+    buttons.final.addEventListener('click', () => grade(true));
+    buttons.restart.addEventListener('click', restart);
+
+    new ResizeObserver(() => layout()).observe(page);
+    wide.addEventListener('change', layout);
+    controls.removeAttribute('hidden');
+  }
+</script>

@@ -6,6 +6,9 @@ import ElevationDiagram from '../../components/ElevationDiagram.astro';
 import BlueprintDrawer from '../../components/BlueprintDrawer.astro';
 import StructureNav from '../../components/StructureNav.astro';
 import StructureViewer from '../../components/three/StructureViewer';
+import PromptStack from '../../components/figures/PromptStack.astro';
+import SilenceInterval from '../../components/figures/SilenceInterval.astro';
+import MarginDialogue from '../../components/figures/MarginDialogue.astro';
 import { pad } from '../../lib/format';
 
 export async function getStaticPaths() {
@@ -87,14 +90,26 @@ const nextLink = next
       />
     </div>
 
-    <!-- 4. sketch plate -->
-    <figure class="plate mt-12">
-      <img src={d.sketch} alt={d.sketchCaption} class="w-full" />
-      <figcaption>
-        <span>FIG. 01 — {d.sketchCaption}</span>
-        <span>SCALE: NTS</span>
-      </figcaption>
-    </figure>
+    <!-- 4. FIG. 01: a working figure where the structure has one, else the sketch -->
+    <div class="mt-12">
+      {
+        d.number === 2 ? (
+          <PromptStack />
+        ) : d.number === 3 ? (
+          <SilenceInterval />
+        ) : d.number === 4 ? (
+          <MarginDialogue />
+        ) : (
+          <figure class="plate">
+            <img src={d.sketch} alt={d.sketchCaption} class="w-full" />
+            <figcaption>
+              <span>FIG. 01 — {d.sketchCaption}</span>
+              <span>SCALE: NTS</span>
+            </figcaption>
+          </figure>
+        )
+      }
+    </div>
 
     <!-- 5. elevation diagram -->
     <div class="mt-12">

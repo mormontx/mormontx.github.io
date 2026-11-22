@@ -1,0 +1,417 @@
+---
+/**
+ * FIG. 01 on The Unstable Prompt: five answers stacked into a brief. Drag a
+ * block (or focus it and use the arrow keys) and the blocks above ride along.
+ * Every joint shows the plumb of the weight it carries; the tightest joint is
+ * ringed. Push past an edge and the load above tips off. The cohort then
+ * rebuilds from the last version that stood, and that counts as a revision.
+ * The build renders the starting stack, so the figure reads without JS.
+ */
+import {
+  analyse,
+  BLOCKS,
+  blockLeft,
+  blockTop,
+  MAX_REACH,
+  readout,
+  STACK,
+  STACK_START,
+} from '../../lib/stack';
+
+const S = STACK;
+const s = analyse(STACK_START);
+const r = readout(s, 0, null);
+const hatch = Array.from({ length: 21 }, (_, i) => S.tableLeft + 6 + i * 14)
+  .map((x) => `M ${x} ${S.tableY + 12} L ${x - 8} ${S.tableY + 22}`)
+  .join(' ');
+const limitX = S.edgeX + MAX_REACH * S.length;
+const reachX = S.edgeX + s.reach * S.length;
+---
+
+<figure class="plate" data-stack>
+  <svg
+    viewBox="24 44 676 296"
+    class="stack-svg block h-auto w-full"
+    role="group"
+    aria-label="Five stacked blocks on a table. Each block is a slider."
+    data-stack-svg
+  >
+    <!-- plumb line at the table edge -->
+    <line x1={S.edgeX} y1="58" x2={S.edgeX} y2={S.tableY + 34} class="stroke-ink" stroke-width="0.75" stroke-dasharray="5 6" opacity="0.6"></line>
+    <text x={S.edgeX + 8} y="62" class="stack-label">PLUMB</text>
+
+    <!-- the harmonic limit: as far as five blocks can ever reach -->
+    <line x1={limitX} y1="96" x2={limitX} y2={S.tableY} class="stroke-hairline" stroke-width="1" stroke-dasharray="2 5"></line>
+    <text x={limitX + 6} y="100" class="stack-label">LIMIT · {MAX_REACH.toFixed(2)} L</text>
+
+    <!-- table -->
+    <rect x={S.tableLeft} y={S.tableY} width={S.edgeX - S.tableLeft} height="12" class="fill-paper stroke-ink" stroke-width="1"></rect>
+    <path d={hatch} class="stroke-mute" stroke-width="0.6"></path>
+    <text x={S.tableLeft} y={S.tableY + 40} class="stack-label">TABLE</text>
+
+    <!-- reach dimension -->
+    <g data-reach>
+      <line x1={S.edgeX} y1={S.tableY + 30} x2={reachX} y2={S.tableY + 30} class="stroke-accent" stroke-width="1" data-reach-line></line>
+      <line x1={S.edgeX} y1={S.tableY + 25} x2={S.edgeX} y2={S.tableY + 35} class="stroke-accent" stroke-width="1"></line>
+      <line x1={reachX} y1={S.tableY + 25} x2={reachX} y2={S.tableY + 35} class="stroke-accent" stroke-width="1" data-reach-tick></line>
+      <text x={reachX + 8} y={S.tableY + 34} class="stack-label stack-label-accent" data-reach-label>REACH {s.reach.toFixed(2)} L</text>
+    </g>
+
+    <!-- blocks: bottom (the prompt) to top (the revised brief) -->
+    {
+      BLOCKS.map((b, i) => (
+        <g
+          class="stack-block"
+          transform={`translate(${blockLeft(s.xs[i])} ${blockTop(i)})`}
+          tabindex="0"
+          role="slider"
+          aria-label={`${b.week}, ${b.name}`}
+          aria-valuemin={String(S.min)}
+          aria-valuemax={String(S.max)}
+          aria-valuenow={s.xs[i].toFixed(2)}
+          aria-valuetext={`${s.xs[i].toFixed(2)} block lengths from the table edge. ${r.aria}`}
+          data-block={i}
+        >
+          <rect width={S.length} height={S.height} class="stack-face" stroke-width="1"></rect>
+          <line x1="10" y1="7" x2={S.length - 10} y2="7" class="stroke-ink" stroke-width="0.5" opacity="0.3"></line>
+          <text x="12" y={S.height / 2 + 8} class="stack-name">
+            <tspan class="stack-week">{b.week}</tspan>
+            <tspan dx="8" class="stack-long">{b.name.toUpperCase()}</tspan>
+          </text>
+        </g>
+      ))
+    }
+
+    <!-- plumbs: centre of mass of everything above each joint -->
+    {
+      s.joints.map((jt) => (
+        <g class:list={['stack-plumb', jt === s.weakest && 'is-weakest']} data-plumb={jt.index}>
+          <line x1={jt.plumb.x} y1={jt.plumb.y1} x2={jt.plumb.x} y2={jt.plumb.y2} stroke-width="1" stroke-dasharray="2 3"></line>
+          <circle cx={jt.plumb.x} cy={jt.plumb.y2} r="2.5"></circle>
+        </g>
+      ))
+    }
+
+    <!-- the tightest joint -->
+    <circle cx={s.weakest.pivot.x} cy={s.weakest.pivot.y} r="15" fill="none" class="stroke-accent" stroke-width="1.25" data-crit></circle>
+    <line
+      x1={s.weakest.pivot.x + 15 * s.weakest.side} y1={s.weakest.pivot.y}
+      x2={s.weakest.tag.x - 6 * s.weakest.side} y2={s.weakest.pivot.y}
+      class="stack-leader stroke-accent" stroke-width="0.75" stroke-dasharray="2 3" data-crit-leader
+    ></line>
+    <text x={s.weakest.tag.x} y={s.weakest.tag.y} text-anchor={s.weakest.tag.anchor} class="stack-label stack-label-accent" data-crit-label>BUCKLE</text>
+  </svg>
+
+  <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-hairline pt-4 sm:grid-cols-4">
+    <div>
+      <dt class="meta">Reach past edge</dt>
+      <dd class="mt-1 whitespace-nowrap font-mono text-sm tabular-nums text-ink" data-readout="reach">{r.reach}</dd>
+    </div>
+    <div>
+      <dt class="meta">Tightest joint</dt>
+      <dd class="mt-1 whitespace-nowrap font-mono text-sm tabular-nums text-ink" data-readout="weakest">{r.weakest}</dd>
+    </div>
+    <div>
+      <dt class="meta">To spare</dt>
+      <dd class="mt-1 whitespace-nowrap font-mono text-sm tabular-nums text-ink" data-readout="spare">{r.spare}</dd>
+    </div>
+    <div>
+      <dt class="meta">Revisions</dt>
+      <dd class="mt-1 whitespace-nowrap font-mono text-sm tabular-nums text-ink" data-readout="revisions">{r.revisions}</dd>
+    </div>
+  </dl>
+  <p class="mt-3 font-serif text-base italic text-mute" aria-live="polite" data-readout="note">{r.note}</p>
+
+  <figcaption>
+    <span>FIG. 01 — EACH ANSWER LEANS ON THE LAST</span>
+    <span class="flex items-center gap-4" hidden data-stack-controls>
+      <span class="max-sm:hidden">Drag a block · ← →</span>
+      <button type="button" class="uppercase tracking-[inherit] transition-colors hover:text-accent" data-stack-reset>Reset</button>
+    </span>
+  </figcaption>
+</figure>
+
+<style>
+  .stack-svg {
+    /* Horizontal drags slide blocks; vertical swipes still scroll the page. */
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .stack-label {
+    font-family: theme('fontFamily.mono');
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    fill: theme('colors.mute');
+  }
+  .stack-label-accent {
+    fill: theme('colors.accent');
+  }
+  .stack-block {
+    cursor: grab;
+    outline: none;
+  }
+  [data-dragging] .stack-block {
+    cursor: grabbing;
+  }
+  .stack-face {
+    fill: theme('colors.paper');
+    stroke: theme('colors.ink');
+  }
+  .stack-block:hover .stack-face,
+  .stack-block.is-held .stack-face {
+    stroke: theme('colors.accent');
+  }
+  .stack-block:focus-visible .stack-face {
+    stroke: theme('colors.accent');
+    stroke-width: 2;
+  }
+  .stack-name {
+    font-family: theme('fontFamily.mono');
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    fill: theme('colors.ink');
+    pointer-events: none;
+  }
+  .stack-week {
+    fill: theme('colors.accent');
+  }
+  .stack-plumb line {
+    stroke: theme('colors.ink');
+    opacity: 0.35;
+  }
+  .stack-plumb circle {
+    fill: theme('colors.ink');
+    opacity: 0.45;
+  }
+  .stack-plumb.is-weakest line,
+  .stack-plumb.is-weakest circle {
+    stroke: theme('colors.accent');
+    fill: theme('colors.accent');
+    opacity: 1;
+  }
+  .stack-block.is-rebuilt {
+    animation: stack-rebuild 0.6s ease-out both;
+  }
+  @keyframes stack-rebuild {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stack-block.is-rebuilt { animation: none; }
+  }
+  /* Phone width: svg text gets too small; the readout carries it. The week
+     tag stays, set larger. */
+  @media (max-width: 639px) {
+    .stack-label,
+    .stack-leader,
+    .stack-long {
+      display: none;
+    }
+    .stack-name {
+      font-size: 22px;
+    }
+  }
+</style>
+
+<script>
+  import { analyse, blockLeft, blockTop, BLOCKS, readout, STACK, STACK_START } from '../../lib/stack';
+
+  const S = STACK;
+  const STEP = 0.02;
+  const BIG_STEP = 0.1;
+  const FALL_MS = 950;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  // Labels hide at phone width, so the drawing can be cropped tighter there.
+  const phone = window.matchMedia('(max-width: 639px)');
+  const VIEW = { wide: '24 44 676 296', phone: '28 88 548 246' };
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-stack]')) {
+    const svg = root.querySelector<SVGSVGElement>('[data-stack-svg]')!;
+    const blocks = [...root.querySelectorAll<SVGGElement>('[data-block]')];
+    const plumbs = [...root.querySelectorAll<SVGGElement>('[data-plumb]')];
+    const crit = root.querySelector<SVGCircleElement>('[data-crit]')!;
+    const critLabel = root.querySelector<SVGTextElement>('[data-crit-label]')!;
+    const critLeader = root.querySelector<SVGLineElement>('[data-crit-leader]')!;
+    const reachLine = root.querySelector<SVGLineElement>('[data-reach-line]')!;
+    const reachTick = root.querySelector<SVGLineElement>('[data-reach-tick]')!;
+    const reachLabel = root.querySelector<SVGTextElement>('[data-reach-label]')!;
+    const readouts = root.querySelectorAll<HTMLElement>('[data-readout]');
+
+    let xs = [...STACK_START];
+    let revisions = 0;
+    let lastFailure: string | null = null;
+    let falling = false;
+    let frame = 0;
+    let drag: { index: number; startX: number; snapshot: number[]; pointer: number } | null = null;
+
+    const set = (el: Element, attrs: Record<string, string | number>) => {
+      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
+    };
+
+    const render = () => {
+      frame = 0;
+      const s = analyse(xs);
+      const r = readout(s, revisions, lastFailure);
+      blocks.forEach((g, i) => {
+        g.setAttribute('transform', `translate(${blockLeft(s.xs[i])} ${blockTop(i)})`);
+        g.style.opacity = '';
+        g.setAttribute('aria-valuenow', s.xs[i].toFixed(2));
+        g.setAttribute('aria-valuetext', `${s.xs[i].toFixed(2)} block lengths from the table edge. ${r.aria}`);
+      });
+      s.joints.forEach((jt, j) => {
+        const g = plumbs[j];
+        g.classList.toggle('is-weakest', jt === s.weakest);
+        g.style.opacity = '';
+        set(g.querySelector('line')!, { x1: jt.plumb.x, x2: jt.plumb.x, y1: jt.plumb.y1, y2: jt.plumb.y2 });
+        set(g.querySelector('circle')!, { cx: jt.plumb.x, cy: jt.plumb.y2 });
+      });
+      const w = s.weakest;
+      set(crit, { cx: w.pivot.x, cy: w.pivot.y });
+      set(critLeader, { x1: w.pivot.x + 15 * w.side, x2: w.tag.x - 6 * w.side, y1: w.pivot.y, y2: w.pivot.y });
+      set(critLabel, { x: w.tag.x, y: w.tag.y, 'text-anchor': w.tag.anchor });
+      const rx = S.edgeX + s.reach * S.length;
+      set(reachLine, { x2: rx });
+      set(reachTick, { x1: rx, x2: rx });
+      set(reachLabel, { x: rx + 8 });
+      reachLabel.textContent = `REACH ${s.reach.toFixed(2)} L`;
+      for (const node of readouts) {
+        const key = node.dataset.readout as keyof typeof r;
+        node.textContent = r[key];
+      }
+    };
+
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(render);
+    };
+
+    /** The load above the failed joint tips about its corner and drops away. */
+    const topple = (snapshot: number[]) => {
+      const s = analyse(xs);
+      const failed = s.failed!;
+      falling = true;
+      drag = null;
+      root.removeAttribute('data-dragging');
+      blocks.forEach((g) => g.classList.remove('is-held'));
+      const start = performance.now();
+      const T = reduced.matches ? 250 : FALL_MS;
+      const tipping = blocks.slice(failed.index);
+      // The plumbs inside the falling load have nothing left to stand on.
+      plumbs.forEach((g, j) => {
+        if (j > failed.index) g.style.opacity = '0';
+      });
+
+      const step = (now: number) => {
+        const p = Math.min(1, (now - start) / T);
+        tipping.forEach((g, k) => {
+          const i = failed.index + k;
+          const base = `translate(${blockLeft(s.xs[i])} ${blockTop(i)})`;
+          if (reduced.matches) {
+            g.style.opacity = String(1 - p);
+            return;
+          }
+          const angle = 80 * p * p * failed.side;
+          const drop = 320 * Math.max(0, p - 0.3) ** 2;
+          g.setAttribute(
+            'transform',
+            `translate(0 ${drop.toFixed(1)}) rotate(${angle.toFixed(2)} ${failed.pivot.x} ${failed.pivot.y}) ${base}`,
+          );
+          g.style.opacity = String(Math.min(1, 1.6 - 1.6 * p));
+        });
+        if (p < 1) {
+          requestAnimationFrame(step);
+          return;
+        }
+        // Rebuild from the last version that stood.
+        xs = snapshot;
+        revisions += 1;
+        lastFailure = failed.name;
+        render();
+        for (const g of tipping) {
+          g.classList.remove('is-rebuilt');
+          void g.getBoundingClientRect();
+          g.classList.add('is-rebuilt');
+        }
+        falling = false;
+      };
+      requestAnimationFrame(step);
+    };
+
+    /** Slide block i by d (in L); the blocks above ride along. */
+    const slide = (snapshot: number[], index: number, d: number) => {
+      xs = snapshot.map((x, k) => (k >= index ? Math.min(S.max, Math.max(S.min, x + d)) : x));
+      lastFailure = null;
+      root.setAttribute('data-stack-touched', '');
+      if (analyse(xs).failed) {
+        topple(snapshot);
+        return;
+      }
+      schedule();
+    };
+
+    const svgPoint = (event: PointerEvent) => {
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return { x: 0, y: 0 };
+      return new DOMPoint(event.clientX, event.clientY).matrixTransform(ctm.inverse());
+    };
+
+    /** Forgiving pick: the block whose row the pointer is in, if it is near it. */
+    const pick = (event: PointerEvent): number | null => {
+      const direct = (event.target as Element).closest?.('[data-block]');
+      if (direct) return Number(direct.getAttribute('data-block'));
+      const p = svgPoint(event);
+      const row = Math.floor((S.tableY - p.y) / S.height);
+      if (row < 0 || row >= BLOCKS.length) return null;
+      const left = blockLeft(xs[row]);
+      return p.x > left - 24 && p.x < left + S.length + 24 ? row : null;
+    };
+
+    svg.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 || falling) return;
+      const index = pick(event);
+      if (index == null) return;
+      svg.setPointerCapture(event.pointerId);
+      root.setAttribute('data-dragging', '');
+      blocks[index].classList.add('is-held');
+      drag = { index, startX: svgPoint(event).x, snapshot: [...xs], pointer: event.pointerId };
+    });
+    svg.addEventListener('pointermove', (event) => {
+      if (!drag || falling || event.pointerId !== drag.pointer) return;
+      slide(drag.snapshot, drag.index, (svgPoint(event).x - drag.startX) / S.length);
+    });
+    const end = (event: PointerEvent) => {
+      if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
+      if (drag) blocks[drag.index].classList.remove('is-held');
+      drag = null;
+      root.removeAttribute('data-dragging');
+    };
+    svg.addEventListener('pointerup', end);
+    svg.addEventListener('pointercancel', end);
+
+    blocks.forEach((g, index) => {
+      g.addEventListener('keydown', (event) => {
+        if (falling) return;
+        const step = event.shiftKey ? BIG_STEP : STEP;
+        const d = { ArrowLeft: -step, ArrowDown: -step, ArrowRight: step, ArrowUp: step }[event.key];
+        if (d == null) return;
+        event.preventDefault();
+        slide([...xs], index, d);
+      });
+    });
+
+    root.querySelector('[data-stack-reset]')?.addEventListener('click', () => {
+      if (falling) return;
+      xs = [...STACK_START];
+      revisions = 0;
+      lastFailure = null;
+      render();
+    });
+
+    const fit = () => svg.setAttribute('viewBox', phone.matches ? VIEW.phone : VIEW.wide);
+    fit();
+    phone.addEventListener('change', fit);
+
+    root.querySelector('[data-stack-controls]')?.removeAttribute('hidden');
+    root.setAttribute('data-stack-ready', '');
+  }
+</script>
