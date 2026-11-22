@@ -7,12 +7,18 @@ dist/
 # Astro generated
 .astro/
 
+# Generated docs (kept local, not part of the site source)
+docs/
+
+# QA scratch (screenshots and reports stay local)
+qa/
+
 # Local preview / logs
 preview.log
 *.log
 
-# QA scratch (screenshots themselves are tracked; temp Chrome profiles are not)
-qa/.tmp-chrome/
+# Temp
+.tmp-*
 
 # Unrelated earlier experiments kept outside the site source
 archive-v1/

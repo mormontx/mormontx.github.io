@@ -41,7 +41,12 @@ const nextLink = next
       href: `/structures/${next.id}/`,
       label: `${pad(next.data.number)} · ${next.data.title.toUpperCase()}`,
     }
-  : null;
+  : {
+      href: '/notes/01-the-margin-is-a-room/',
+      label: 'FIELD NOTE · THE MARGIN IS A ROOM',
+      secondaryHref: '/',
+      secondaryLabel: 'ARCHIVE INDEX',
+    };
 ---
 
 <BaseLayout title={d.title}>
@@ -87,13 +92,101 @@ const nextLink = next
     </div>
 
     <!-- 4. sketch plate -->
-    <figure class="plate mt-12">
-      <img src={d.sketch} alt={d.sketchCaption} class="w-full" />
-      <figcaption>
-        <span>FIG. 01 — {d.sketchCaption}</span>
-        <span>SCALE: NTS</span>
-      </figcaption>
-    </figure>
+    {
+      d.artifact ? (
+        <figure
+          class="plate mt-12"
+          data-plate-switcher
+          data-diagram-caption={`FIG. 01A — ${d.sketchCaption}`}
+          data-diagram-scale="SCALE: NTS"
+          data-artifact-caption={`FIG. 01B — ${d.artifact.caption}`}
+          data-artifact-scale={`SCALE: ${d.artifact.scale}`}
+          data-split-caption="FIG. 01A & 01B — Tectonic page proof alongside pencil-on-paper correspondence"
+          data-split-scale={`SCALE: NTS · ${d.artifact.scale}`}
+        >
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-3">
+            <span class="meta">Plate 01 / Dual View</span>
+            <div
+              class="flex flex-wrap gap-2"
+              role="group"
+              aria-label="Plate 01 view mode"
+            >
+              <button
+                type="button"
+                data-plate-mode="diagram"
+                aria-pressed="true"
+                class="min-h-[28px] border border-accent bg-paper px-2.5 py-1 font-mono text-meta uppercase text-accent transition-colors"
+              >
+                01A · Tectonic Diagram
+              </button>
+              <button
+                type="button"
+                data-plate-mode="artifact"
+                aria-pressed="false"
+                class="min-h-[28px] border border-hairline px-2.5 py-1 font-mono text-meta uppercase text-mute transition-colors hover:border-ink hover:text-ink"
+              >
+                01B · Pencil Facsimile
+              </button>
+              <button
+                type="button"
+                data-plate-mode="split"
+                aria-pressed="false"
+                class="min-h-[28px] border border-hairline px-2.5 py-1 font-mono text-meta uppercase text-mute transition-colors hover:border-ink hover:text-ink"
+              >
+                Compare Side-by-Side
+              </button>
+            </div>
+          </div>
+
+          <div data-plate-panels class="grid gap-4">
+            <div data-plate-panel="diagram">
+              <img
+                src={d.sketch}
+                alt={d.sketchCaption}
+                width="800"
+                height="520"
+                class="block w-full h-auto"
+              />
+              <p class="meta mt-2 hidden text-mute" data-split-label>
+                01A · Page Proof (Tectonic Abstraction)
+              </p>
+            </div>
+
+            <div data-plate-panel="artifact" class="hidden">
+              <img
+                src={d.artifact.src}
+                alt={d.artifact.caption}
+                width="800"
+                height="520"
+                class="block w-full h-auto"
+              />
+              <p class="meta mt-2 hidden text-mute" data-split-label>
+                01B · {d.artifact.label}
+              </p>
+            </div>
+          </div>
+
+          <figcaption class="flex-wrap">
+            <span data-plate-caption>FIG. 01A — {d.sketchCaption}</span>
+            <span data-plate-scale class="shrink-0">SCALE: NTS</span>
+          </figcaption>
+        </figure>
+      ) : (
+        <figure class="plate mt-12">
+          <img
+            src={d.sketch}
+            alt={d.sketchCaption}
+            width="800"
+            height="520"
+            class="block w-full h-auto"
+          />
+          <figcaption>
+            <span>FIG. 01 — {d.sketchCaption}</span>
+            <span>SCALE: NTS</span>
+          </figcaption>
+        </figure>
+      )
+    }
 
     <!-- 5. elevation diagram -->
     <div class="mt-12">
@@ -101,7 +194,7 @@ const nextLink = next
     </div>
 
     <!-- 6. narrative -->
-    <div class="md-content relative max-w-[65ch] mt-16">
+    <div class="md-content relative max-w-[65ch] lg:max-w-[min(62ch,calc(100%-15.5rem))] mt-16">
       <Content />
     </div>
 
@@ -114,3 +207,58 @@ const nextLink = next
     <StructureNav prev={prevLink} next={nextLink} />
   </article>
 </BaseLayout>
+
+<script>
+  const ACTIVE_CLASSES = ['border-accent', 'bg-paper', 'text-accent'];
+  const INACTIVE_CLASSES = [
+    'border-hairline',
+    'text-mute',
+    'hover:border-ink',
+    'hover:text-ink',
+  ];
+
+  for (const switcher of document.querySelectorAll<HTMLElement>('[data-plate-switcher]')) {
+    const buttons = switcher.querySelectorAll<HTMLButtonElement>('[data-plate-mode]');
+    const panels = switcher.querySelector<HTMLElement>('[data-plate-panels]');
+    const diagramPanel = switcher.querySelector<HTMLElement>('[data-plate-panel="diagram"]');
+    const artifactPanel = switcher.querySelector<HTMLElement>('[data-plate-panel="artifact"]');
+    const splitLabels = switcher.querySelectorAll<HTMLElement>('[data-split-label]');
+    const captionEl = switcher.querySelector<HTMLElement>('[data-plate-caption]');
+    const scaleEl = switcher.querySelector<HTMLElement>('[data-plate-scale]');
+
+    if (!panels || !diagramPanel || !artifactPanel) continue;
+
+    const setMode = (mode: 'diagram' | 'artifact' | 'split') => {
+      for (const btn of buttons) {
+        const isActive = btn.dataset.plateMode === mode;
+        btn.setAttribute('aria-pressed', String(isActive));
+        btn.classList.remove(...(isActive ? INACTIVE_CLASSES : ACTIVE_CLASSES));
+        btn.classList.add(...(isActive ? ACTIVE_CLASSES : INACTIVE_CLASSES));
+      }
+
+      const isSplit = mode === 'split';
+      panels.classList.toggle('md:grid-cols-2', isSplit);
+      diagramPanel.classList.toggle('hidden', mode === 'artifact');
+      artifactPanel.classList.toggle('hidden', mode === 'diagram');
+      for (const label of splitLabels) {
+        label.classList.toggle('hidden', !isSplit);
+      }
+
+      if (captionEl) {
+        captionEl.textContent = switcher.dataset[`${mode}Caption`] ?? '';
+      }
+      if (scaleEl) {
+        scaleEl.textContent = switcher.dataset[`${mode}Scale`] ?? '';
+      }
+    };
+
+    for (const btn of buttons) {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.plateMode;
+        if (mode === 'diagram' || mode === 'artifact' || mode === 'split') {
+          setMode(mode);
+        }
+      });
+    }
+  }
+</script>

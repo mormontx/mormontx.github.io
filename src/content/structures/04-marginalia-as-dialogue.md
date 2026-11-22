@@ -11,6 +11,11 @@ origin: "after Lev Vygotsky"
 summary: "Grades on drafts are replaced with hand-written margin questions; feedback becomes correspondence."
 sketch: "/sketches/04-marginalia-dialogue.svg"
 sketchCaption: "Page proof — a margin question answered by a smaller hand beneath it"
+artifact:
+  src: "/sketches/04-marginalia-artifact.svg"
+  caption: "Archival facsimile — Draft 02 margin crop showing instructor pencil question and smaller student reply beneath"
+  scale: "1:1 CROP · GRAPHITE ON 90GSM"
+  label: "Archival Facsimile (Pencil on Paper)"
 elevation:
   - { t: "Draft 1", v: 3, note: "margins hold questions where grades once stood" }
   - { t: "Draft 2", v: 5, note: "one student answers in the margin of the next draft" }

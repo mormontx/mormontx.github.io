@@ -32,7 +32,7 @@ import {
 const pad = (n: number) => String(n).padStart(2, '0');
 
 const SR_DESCRIPTIONS: Record<number, string> = {
-  1: 'Interactive three-dimensional model of The Dialectic Room: eighteen chairs in a ring with one empty seat. Use the Exploded view button to separate the chairs.',
+  1: 'Interactive three-dimensional model of The Dialectic Room: eighteen monoliths in a ring with one empty place, each catching the light differently. Use the Exploded view button to separate the monoliths.',
   2: 'Interactive three-dimensional model of The Unstable Prompt: five stacked plates with a marked critical joint. Use the Exploded view button to separate the plates.',
   3: 'Interactive three-dimensional model of Scaffolding Silence: a grid of posts around a missing centre member. Use the Exploded view button to lift and splay the posts.',
   4: 'Interactive three-dimensional model of Marginalia as Dialogue: a central page with six margin sheets connected by hairlines. Use the Exploded view button to lift the sheets away from the page.',
@@ -78,8 +78,8 @@ const VIEWER_FRAMING: Record<number, ViewerFraming> = {
     exploded: { center: [0, 0.1, 0], verticalExtent: 0.65, horizontalExtent: 3.5 },
   },
   2: {
-    assembled: { center: [-0.15, 0.05, 0], verticalExtent: 0.55, horizontalExtent: 1.4 },
-    exploded: { center: [-0.15, 1.0, 0], verticalExtent: 1.6, horizontalExtent: 2.3 },
+    assembled: { center: [0.06, 0.31, 0], verticalExtent: 0.6, horizontalExtent: 1.5 },
+    exploded: { center: [0.5, 1.5, 0], verticalExtent: 1.9, horizontalExtent: 1.9 },
   },
   3: {
     assembled: { center: [0, 1.1, 0], verticalExtent: 1.7, horizontalExtent: 1.4 },

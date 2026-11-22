@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" role="img" aria-label="Treble clef cursor">
+  <!-- straight stem -->
+  <path d="M14.7 3.0 L14.9 12.4" fill="none" stroke="#1A1A1A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- open top curve (leftward and downward, not a closed loop) -->
+  <path d="M14.7 3.2 C11.8 2.4 10.0 4.8 11.0 7.2" fill="none" stroke="#1A1A1A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- spiral belly: ~1.5 turns around (13,16) -->
+  <path d="M14.9 12.4 C18.0 11.8 19.4 14.4 18.4 17.8 C17.4 21.0 13.2 21.6 10.6 19.4 C8.2 17.4 8.6 14.2 11.0 13.0 C13.4 11.9 15.4 13.4 14.6 16.0 C14.0 18.2 11.8 18.4 11.2 16.8" fill="none" stroke="#1A1A1A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- bottom tail, hooking left -->
+  <path d="M10.4 19.0 C8.8 20.6 7.4 22.4 8.0 24.6 C8.4 26.0 7.2 26.2 6.8 24.8" fill="none" stroke="#1A1A1A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- spiral centre accent -->
+  <circle cx="13.0" cy="16.2" r="1.0" fill="#A85D6B"/>
+</svg>

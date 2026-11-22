@@ -33,6 +33,14 @@ const structures = defineCollection({
         .array(z.object({ year: z.number().int(), change: z.string() }))
         .min(2),
     }),
+    artifact: z
+      .object({
+        src: z.string(),
+        caption: z.string(),
+        scale: z.string(),
+        label: z.string(),
+      })
+      .optional(),
   }),
 });
 

@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { Canvas } from '@react-three/fiber';
 import type { ThreeElement } from '@react-three/fiber';
 import { SCENE } from '../../data/scene';
@@ -83,10 +84,17 @@ export default function CanvasHost({
             position: SCENE.camera.position,
             ...camera,
           }}
-          onCreated={({ gl, camera: activeCamera }) => {
+          onCreated={({ gl, scene, camera: activeCamera }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = SCENE.render.toneMappingExposure;
             gl.outputColorSpace = THREE.SRGBColorSpace;
+
+            // A neutral studio environment so mirror-like materials have
+            // something to reflect (the monoliths depend on this).
+            const pmrem = new THREE.PMREMGenerator(gl);
+            const envMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+            scene.environment = envMap;
+
             activeCamera.lookAt(
               SCENE.camera.lookAt[0],
               SCENE.camera.lookAt[1],
