@@ -73,7 +73,7 @@ blueprint:
 
 - In `src/data/about.ts`, replace every bracketed editorial slot: `[Department]`, `[University]`, `[2021 — ]`, `[Programme]`, `[Institution]`, `[2019 — ]`, `[Add publication]`, `[Journal / press]`, `[Year]`, `[name]@[institution].edu`, `[personal website]`, `[scholar / ORCID]`.
 - In `src/data/site.ts`, set `name`, `studio`, `siteTitle`, and `description`.
-- In `astro.config.mjs`, `site` is set to `https://mormontx.github.io` — change it if you move to a custom domain.
+- In `astro.config.mjs`, `site` is currently set to `https://mormontx.github.io` (the previous project's URL) — update it to the real domain before deploying, and set `base` as well if the site is published under a subpath (e.g. `https://mormontx.github.io/teaching-portfolio-reimagined/`).
 - The four `public/sketches/*.svg` plates are placeholders — swap in your own drawings when ready.
 
 ## The 3D layer
@@ -82,11 +82,13 @@ The models are three.js + React Three Fiber, built entirely from procedural geom
 
 ## Deployment
 
-`mormontx.github.io` is served by GitHub Pages from the `docs/` folder of the `main` branch (no CI required). After `pnpm build`, refresh the committed output with:
+This repository is the **source** for the site; it is not currently deployed. GitHub Pages is not configured for this repository (`docs/` is gitignored and no Pages workflow is set up).
 
-```sh
-rm -rf docs && cp -r dist docs
-git add docs && git commit -m "Rebuild docs" && git push
-```
+To publish, either:
 
-The live site is `https://mormontx.github.io/`.
+- Enable GitHub Pages on this repository (a static host, a `docs/` folder, or an Actions workflow), or
+- Deploy `dist/` after `pnpm build` to any static host (Netlify, Vercel, Cloudflare Pages, S3).
+
+Before deploying, update `site` in `astro.config.mjs` to the real domain. If the site is published under a subpath (e.g. `https://mormontx.github.io/teaching-portfolio-reimagined/`), set `base` accordingly as well, otherwise assets and canonical links will 404.
+
+The previous site lives at `https://mormontx.github.io/` and is a separate deployment.
