@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { about } from '../data/about';
 import { pad } from '../lib/format';
+import LoadPathBeam from '../components/LoadPathBeam.astro';
 
 const sections = [
   { id: 'position', label: 'Position' },
@@ -63,125 +64,8 @@ const linkClass =
           }
         </section>
 
-        <!-- load path plate -->
-        <figure class="plate my-12">
-          <svg
-            viewBox="0 0 800 260"
-            class="w-full h-auto"
-            role="img"
-            aria-label="Load path diagram: a beam carrying a load, with supports and a marked failure point"
-          >
-            <!-- ground line -->
-            <line
-              x1="70"
-              y1="214"
-              x2="730"
-              y2="214"
-              stroke="#E5E2DC"
-              stroke-width="1"
-              stroke-dasharray="3 6"
-            />
-            <!-- supports -->
-            <line x1="180" y1="150" x2="180" y2="214" stroke="#1A1A1A" stroke-width="1" />
-            <line x1="620" y1="150" x2="620" y2="214" stroke="#1A1A1A" stroke-width="1" />
-            <!-- beam -->
-            <line x1="100" y1="150" x2="700" y2="150" stroke="#1A1A1A" stroke-width="1.5" />
-            <!-- load arrow -->
-            <line
-              x1="400"
-              y1="46"
-              x2="400"
-              y2="142"
-              stroke="#A85D6B"
-              stroke-width="1"
-              stroke-dasharray="3 5"
-            />
-            <path
-              d="M 393 134 L 400 148 L 407 134"
-              fill="none"
-              stroke="#A85D6B"
-              stroke-width="1"
-            />
-            <text
-              x="400"
-              y="34"
-              text-anchor="middle"
-              class="font-mono"
-              font-size="9.5"
-              letter-spacing="0.08em"
-              fill="#6E6A63"
-            >
-              LOAD
-            </text>
-            <!-- failure point -->
-            <circle
-              cx="540"
-              cy="150"
-              r="3.5"
-              fill="#F9F8F6"
-              stroke="#A85D6B"
-              stroke-width="1.5"
-            />
-            <line
-              x1="540"
-              y1="150"
-              x2="540"
-              y2="72"
-              stroke="#E5E2DC"
-              stroke-width="1"
-              stroke-dasharray="2 4"
-            />
-            <text
-              x="540"
-              y="60"
-              text-anchor="middle"
-              class="font-mono"
-              font-size="9.5"
-              letter-spacing="0.08em"
-              fill="#6E6A63"
-            >
-              FAILURE POINT
-            </text>
-            <!-- structure + support labels -->
-            <text
-              x="260"
-              y="178"
-              text-anchor="middle"
-              class="font-mono"
-              font-size="9.5"
-              letter-spacing="0.08em"
-              fill="#6E6A63"
-            >
-              STRUCTURE
-            </text>
-            <text
-              x="180"
-              y="236"
-              text-anchor="middle"
-              class="font-mono"
-              font-size="9.5"
-              letter-spacing="0.08em"
-              fill="#6E6A63"
-            >
-              SUPPORT
-            </text>
-            <text
-              x="620"
-              y="236"
-              text-anchor="middle"
-              class="font-mono"
-              font-size="9.5"
-              letter-spacing="0.08em"
-              fill="#6E6A63"
-            >
-              SUPPORT
-            </text>
-          </svg>
-          <figcaption>
-            <span>FIG. A — LOAD, STRUCTURE, FAILURE POINT</span>
-            <span>SCALE: NTS</span>
-          </figcaption>
-        </figure>
+        <!-- load path plate: an interactive beam -->
+        <LoadPathBeam />
 
         <section id="lineage" class="scroll-mt-8">
           <p class="meta text-accent">{num('lineage')}</p>

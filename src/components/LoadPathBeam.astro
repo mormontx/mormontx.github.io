@@ -1,0 +1,292 @@
+---
+/**
+ * FIG. A on the About page: a beam you can load. Drag (or use the arrow keys)
+ * to move the point load; the support reactions, the deflected shape and the
+ * bending-moment diagram are re-solved live. The build renders the starting
+ * position, so the figure reads correctly without JavaScript.
+ */
+import { BEAM, BEAM_START, layoutBeam } from '../lib/beam';
+
+const B = BEAM;
+const s = layoutBeam(BEAM_START);
+---
+
+<figure class="plate my-12" data-beam>
+  <svg
+    viewBox="0 0 800 320"
+    class="beam-svg block h-auto w-full"
+    role="slider"
+    tabindex="0"
+    aria-label="Load position along the beam"
+    aria-valuemin="0"
+    aria-valuemax={String((B.right - B.left) / B.unit)}
+    aria-valuenow={s.aria.now}
+    aria-valuetext={s.aria.text}
+    data-beam-svg
+  >
+    <!-- ground datum -->
+    <line x1="60" y1="158" x2="740" y2="158" class="stroke-hairline" stroke-width="1" stroke-dasharray="3 6"></line>
+
+    <!-- support A: pin (triangle + hatching) -->
+    <path d={`M ${B.supportA} ${B.axisY} L ${B.supportA - 12} 150 L ${B.supportA + 12} 150 Z`} class="fill-paper stroke-ink" stroke-width="1"></path>
+    <path
+      d={[0, 1, 2, 3, 4].map((i) => `M ${B.supportA - 14 + i * 7} 157 L ${B.supportA - 10 + i * 7} 151`).join(' ')}
+      class="stroke-mute" stroke-width="0.75"
+    ></path>
+    <!-- support B: roller (triangle on two wheels) -->
+    <path d={`M ${B.supportB} ${B.axisY} L ${B.supportB - 12} 146 L ${B.supportB + 12} 146 Z`} class="fill-paper stroke-ink" stroke-width="1"></path>
+    <circle cx={B.supportB - 6} cy="152" r="3.5" class="fill-paper stroke-ink" stroke-width="1"></circle>
+    <circle cx={B.supportB + 6} cy="152" r="3.5" class="fill-paper stroke-ink" stroke-width="1"></circle>
+
+    <!-- failure-point leader, behind the reaction arrows -->
+    <line
+      x1={s.failure.x} y1={s.failure.beamY} x2={s.failure.x} y2={s.failure.momentY}
+      class="stroke-hairline" stroke-width="1" stroke-dasharray="2 4" data-fail-leader
+    ></line>
+
+    <!-- reactions -->
+    <path d={s.reactions.a.path} class:list={['beam-reaction', s.reactions.a.uplift && 'is-uplift']} fill="none" stroke-width="1.25" data-reaction="a"></path>
+    <path d={s.reactions.b.path} class:list={['beam-reaction', s.reactions.b.uplift && 'is-uplift']} fill="none" stroke-width="1.25" data-reaction="b"></path>
+    <text x={B.supportA - 10} y="196" text-anchor="end" class="beam-label" data-reaction-label="a">{s.reactions.a.label}</text>
+    <text x={B.supportB + 10} y="196" text-anchor="start" class="beam-label" data-reaction-label="b">{s.reactions.b.label}</text>
+
+    <!-- the beam, drawn in its deflected shape (exaggerated) -->
+    <line x1={B.left} y1={B.axisY} x2={B.right} y2={B.axisY} class="stroke-hairline" stroke-width="1" stroke-dasharray="2 4"></line>
+    <polyline points={s.beamPoints} fill="none" class="stroke-ink" stroke-width="2" stroke-linejoin="round" data-beam-line></polyline>
+    <text x={B.left} y={B.axisY - 14} class="beam-label">STRUCTURE</text>
+
+    <!-- bending-moment diagram -->
+    <line x1={B.left} y1={B.momentBaseY} x2={B.right} y2={B.momentBaseY} class="stroke-mute" stroke-width="0.75"></line>
+    <path d={s.momentPath} class="beam-moment" stroke-width="1" data-beam-moment></path>
+    <text x={B.left} y="312" class="beam-label">BENDING MOMENT</text>
+
+    <!-- failure point: peak bending moment, on the beam and on the diagram -->
+    <circle cx={s.failure.x} cy={s.failure.beamY} r="4.5" class="fill-paper stroke-accent" stroke-width="1.5" data-fail-beam></circle>
+    <circle cx={s.failure.x} cy={s.failure.momentY} r="3" class="fill-accent" data-fail-moment></circle>
+    <text x={s.failure.labelX} y={s.failure.labelY} text-anchor={s.failure.anchor} class="beam-label beam-label-accent" data-fail-label>FAILURE POINT</text>
+
+    <!-- the load: a draggable arrow -->
+    <g transform={`translate(${s.load.x} 0)`} class="beam-load" data-beam-load>
+      <rect x="-22" y="4" width="44" height={B.axisY} fill="transparent"></rect>
+      <line x1="0" y1={B.loadTopY + 8} x2="0" y2={s.load.shaftEnd} class="stroke-accent" stroke-width="1.5" data-load-shaft></line>
+      <path d={s.load.head} fill="none" class="stroke-accent" stroke-width="1.5" data-load-head></path>
+      <circle cx="0" cy={B.loadTopY} r="13" class="beam-pulse fill-accent" data-load-pulse></circle>
+      <circle cx="0" cy={B.loadTopY} r="8" class="fill-paper stroke-accent" stroke-width="1.5"></circle>
+      <path
+        d={`M -14 ${B.loadTopY - 4} L -18 ${B.loadTopY} L -14 ${B.loadTopY + 4} M 14 ${B.loadTopY - 4} L 18 ${B.loadTopY} L 14 ${B.loadTopY + 4}`}
+        fill="none" class="stroke-accent" stroke-width="1.25" opacity="0.7"
+      ></path>
+      <text x="0" y={B.loadTopY - 16} text-anchor="middle" class="beam-label beam-label-accent">LOAD · {B.load} kN</text>
+    </g>
+  </svg>
+
+  <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-hairline pt-4 sm:grid-cols-4">
+    <div>
+      <dt class="meta">Load at</dt>
+      <dd class="mt-1 whitespace-nowrap font-mono text-sm tabular-nums text-ink" data-readout="position">{s.readout.position}</dd>
+    </div>
+    <div>
+      <dt class="meta">Left support</dt>
+      <dd class:list={['mt-1 whitespace-nowrap font-mono text-sm tabular-nums', s.reactions.a.uplift ? 'text-accent' : 'text-ink']} data-readout="ra">{s.readout.ra}</dd>
+    </div>
+    <div>
+      <dt class="meta">Right support</dt>
+      <dd class:list={['mt-1 whitespace-nowrap font-mono text-sm tabular-nums', s.reactions.b.uplift ? 'text-accent' : 'text-ink']} data-readout="rb">{s.readout.rb}</dd>
+    </div>
+    <div>
+      <dt class="meta">Peak moment</dt>
+      <dd class="mt-1 whitespace-nowrap font-mono text-sm tabular-nums text-ink" data-readout="peak">{s.readout.peak}</dd>
+    </div>
+  </dl>
+  <p class="mt-3 font-serif text-base italic text-mute" data-readout="note">{s.readout.note}</p>
+
+  <figcaption>
+    <span>FIG. A — LOAD, STRUCTURE, FAILURE POINT</span>
+    <span class="beam-hint" hidden data-beam-hint>Drag the load<span class="max-sm:hidden"> · ← →</span></span>
+  </figcaption>
+</figure>
+
+<style>
+  .beam-svg {
+    cursor: ew-resize;
+    /* Horizontal drags move the load; vertical swipes still scroll the page. */
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .beam-svg:focus-visible {
+    outline: 2px solid theme('colors.accent');
+    outline-offset: 4px;
+  }
+  /* Chrome rings a focused svg even after a click; keep the ring for keys only. */
+  .beam-svg:focus:not(:focus-visible) {
+    outline: none;
+  }
+  .beam-label {
+    font-family: theme('fontFamily.mono');
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    fill: theme('colors.mute');
+  }
+  .beam-label-accent {
+    fill: theme('colors.accent');
+  }
+  .beam-reaction {
+    stroke: theme('colors.ink');
+  }
+  .beam-reaction.is-uplift {
+    stroke: theme('colors.accent');
+  }
+  .beam-moment {
+    fill: color-mix(in srgb, theme('colors.accent') 12%, transparent);
+    stroke: theme('colors.accent');
+  }
+  .beam-load {
+    cursor: grab;
+  }
+  [data-dragging] .beam-load {
+    cursor: grabbing;
+  }
+  .beam-pulse {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    [data-beam-ready]:not([data-beam-touched]) .beam-pulse {
+      animation: beam-pulse 2.2s ease-out infinite;
+    }
+  }
+  @keyframes beam-pulse {
+    0% { opacity: 0.35; transform: scale(0.6); }
+    70%, 100% { opacity: 0; transform: scale(1.6); }
+  }
+  /* Phone width: the svg text gets too small to read; the readout below carries it. */
+  @media (max-width: 639px) {
+    .beam-label {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { BEAM, BEAM_START, layoutBeam } from '../lib/beam';
+
+  const STEP = 10; // 0.1 m
+  const BIG_STEP = 50; // 0.5 m
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-beam]')) {
+    const svg = root.querySelector<SVGSVGElement>('[data-beam-svg]')!;
+    const q = <T extends Element>(sel: string) => root.querySelector<T>(sel)!;
+    const el = {
+      line: q<SVGPolylineElement>('[data-beam-line]'),
+      moment: q<SVGPathElement>('[data-beam-moment]'),
+      load: q<SVGGElement>('[data-beam-load]'),
+      shaft: q<SVGLineElement>('[data-load-shaft]'),
+      head: q<SVGPathElement>('[data-load-head]'),
+      ra: q<SVGPathElement>('[data-reaction="a"]'),
+      rb: q<SVGPathElement>('[data-reaction="b"]'),
+      raLabel: q<SVGTextElement>('[data-reaction-label="a"]'),
+      rbLabel: q<SVGTextElement>('[data-reaction-label="b"]'),
+      failLeader: q<SVGLineElement>('[data-fail-leader]'),
+      failBeam: q<SVGCircleElement>('[data-fail-beam]'),
+      failMoment: q<SVGCircleElement>('[data-fail-moment]'),
+      failLabel: q<SVGTextElement>('[data-fail-label]'),
+    };
+    const readouts = root.querySelectorAll<HTMLElement>('[data-readout]');
+
+    let x = BEAM_START;
+    let frame = 0;
+
+    const render = () => {
+      frame = 0;
+      const s = layoutBeam(x);
+      el.line.setAttribute('points', s.beamPoints);
+      el.moment.setAttribute('d', s.momentPath);
+      el.load.setAttribute('transform', `translate(${s.load.x} 0)`);
+      el.shaft.setAttribute('y2', String(s.load.shaftEnd));
+      el.head.setAttribute('d', s.load.head);
+      for (const [path, label, r] of [
+        [el.ra, el.raLabel, s.reactions.a],
+        [el.rb, el.rbLabel, s.reactions.b],
+      ] as const) {
+        path.setAttribute('d', r.path);
+        path.classList.toggle('is-uplift', r.uplift);
+        label.textContent = r.label;
+      }
+      const f = s.failure;
+      el.failLeader.setAttribute('x1', String(f.x));
+      el.failLeader.setAttribute('x2', String(f.x));
+      el.failLeader.setAttribute('y1', String(f.beamY));
+      el.failLeader.setAttribute('y2', String(f.momentY));
+      el.failBeam.setAttribute('cx', String(f.x));
+      el.failBeam.setAttribute('cy', String(f.beamY));
+      el.failMoment.setAttribute('cx', String(f.x));
+      el.failMoment.setAttribute('cy', String(f.momentY));
+      el.failLabel.setAttribute('x', String(f.labelX));
+      el.failLabel.setAttribute('y', String(f.labelY));
+      el.failLabel.setAttribute('text-anchor', f.anchor);
+      for (const node of readouts) {
+        const key = node.dataset.readout as keyof typeof s.readout;
+        node.textContent = s.readout[key];
+      }
+      for (const [key, r] of [['ra', s.reactions.a], ['rb', s.reactions.b]] as const) {
+        const node = root.querySelector<HTMLElement>(`[data-readout="${key}"]`)!;
+        node.classList.toggle('text-accent', r.uplift);
+        node.classList.toggle('text-ink', !r.uplift);
+      }
+      svg.setAttribute('aria-valuenow', s.aria.now);
+      svg.setAttribute('aria-valuetext', s.aria.text);
+    };
+
+    const moveTo = (next: number) => {
+      x = Math.min(BEAM.right, Math.max(BEAM.left, next));
+      root.setAttribute('data-beam-touched', '');
+      if (!frame) frame = requestAnimationFrame(render);
+    };
+
+    const svgX = (event: PointerEvent) => {
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return x;
+      const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(ctm.inverse());
+      return point.x;
+    };
+
+    svg.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      svg.setPointerCapture(event.pointerId);
+      root.setAttribute('data-dragging', '');
+      moveTo(svgX(event));
+    });
+    svg.addEventListener('pointermove', (event) => {
+      if (svg.hasPointerCapture(event.pointerId)) moveTo(svgX(event));
+    });
+    const end = (event: PointerEvent) => {
+      if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
+      root.removeAttribute('data-dragging');
+    };
+    svg.addEventListener('pointerup', end);
+    svg.addEventListener('pointercancel', end);
+
+    svg.addEventListener('keydown', (event) => {
+      const step = event.shiftKey ? BIG_STEP : STEP;
+      const keys: Record<string, number> = {
+        ArrowLeft: x - step,
+        ArrowDown: x - step,
+        ArrowRight: x + step,
+        ArrowUp: x + step,
+        PageDown: x - BIG_STEP,
+        PageUp: x + BIG_STEP,
+        Home: BEAM.left,
+        End: BEAM.right,
+      };
+      if (!(event.key in keys)) return;
+      event.preventDefault();
+      // Snap to the 0.1 m grid so keyboard values stay round.
+      moveTo(Math.round(keys[event.key] / STEP) * STEP);
+    });
+
+    root.querySelector<HTMLElement>('[data-beam-hint]')?.removeAttribute('hidden');
+    root.setAttribute('data-beam-ready', '');
+  }
+</script>
