@@ -2,13 +2,28 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { about } from '../data/about';
 
-const sections = [
+const contact = about.contact as {
+  email?: string;
+  website?: string;
+  scholar?: string;
+};
+
+const sections: { id: string; label: string }[] = [
   { id: 'position', label: 'Position' },
   { id: 'lineage', label: 'Lineage' },
-  { id: 'roles', label: 'Roles' },
-  { id: 'writing', label: 'Selected Writing' },
-  { id: 'contact', label: 'Contact' },
+  ...(about.roles.length > 0 ? [{ id: 'roles', label: 'Roles' }] : []),
+  ...(about.publications.length > 0
+    ? [{ id: 'writing', label: 'Selected Writing' }]
+    : []),
+  ...(Object.keys(contact).length > 0
+    ? [{ id: 'contact', label: 'Contact' }]
+    : []),
 ];
+
+const sectionNumber = (id: string) => {
+  const index = sections.findIndex((section) => section.id === id);
+  return String(index + 1).padStart(2, '0');
+};
 ---
 
 <BaseLayout title="About">
@@ -18,8 +33,7 @@ const sections = [
       A Research-Teacher's Archive
     </h1>
     <p class="mt-4 max-w-2xl font-serif italic text-lg text-mute">
-      What it studies, what it stands on, and how to reach the person who keeps
-      it.
+      What it studies and what it stands on.
     </p>
 
     <div class="mt-14 grid gap-14 lg:grid-cols-[12rem_1fr] lg:gap-16">
@@ -45,7 +59,7 @@ const sections = [
       <!-- body -->
       <div class="max-w-[65ch]">
         <section id="position" class="scroll-mt-8">
-          <p class="meta text-accent">01</p>
+          <p class="meta text-accent">{sectionNumber('position')}</p>
           <h2 class="font-display text-2xl text-ink mt-2">Position</h2>
           {
             about.position.map((paragraph) => (
@@ -175,7 +189,7 @@ const sections = [
         </figure>
 
         <section id="lineage" class="scroll-mt-8">
-          <p class="meta text-accent">02</p>
+          <p class="meta text-accent">{sectionNumber('lineage')}</p>
           <h2 class="font-display text-2xl text-ink mt-2">Lineage</h2>
           {
             about.lineage.map((thinker) => (
@@ -187,64 +201,76 @@ const sections = [
           }
         </section>
 
-        <section id="roles" class="mt-14 scroll-mt-8">
-          <p class="meta text-accent">03</p>
-          <h2 class="font-display text-2xl text-ink mt-2">Roles</h2>
-          {
-            about.roles.map((role) => (
-              <div class="border-t border-hairline py-5">
-                <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <p class="font-serif text-lg italic text-ink">{role.role}</p>
-                  <p class="meta">{role.years}</p>
+        {about.roles.length > 0 && (
+          <section id="roles" class="mt-14 scroll-mt-8">
+            <p class="meta text-accent">{sectionNumber('roles')}</p>
+            <h2 class="font-display text-2xl text-ink mt-2">Roles</h2>
+            {
+              about.roles.map((role) => (
+                <div class="border-t border-hairline py-5">
+                  <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <p class="font-serif text-lg italic text-ink">{role.role}</p>
+                    <p class="meta">{role.years}</p>
+                  </div>
+                  <p class="meta mt-1">{role.place}</p>
+                  <p class="mt-3 font-serif text-base text-mute">{role.focus}</p>
                 </div>
-                <p class="meta mt-1">{role.place}</p>
-                <p class="mt-3 font-serif text-base text-mute">{role.focus}</p>
-              </div>
-            ))
-          }
-        </section>
+              ))
+            }
+          </section>
+        )}
 
-        <section id="writing" class="mt-14 scroll-mt-8">
-          <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-            <p class="meta text-accent">04</p>
-            <a href="/notes/" class="meta transition-colors hover:text-accent">
-              → All Notes
-            </a>
-          </div>
-          <h2 class="font-display text-2xl text-ink mt-2">
-            Selected Writing &amp; Publication
-          </h2>
-          {
-            about.publications.map((pub) => (
-              <div class="border-t border-hairline py-4">
-                <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <p class="font-serif italic text-base text-ink">{pub.title}</p>
-                  <p class="meta">{pub.year}</p>
+        {about.publications.length > 0 && (
+          <section id="writing" class="mt-14 scroll-mt-8">
+            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+              <p class="meta text-accent">{sectionNumber('writing')}</p>
+              <a href="/notes/" class="meta transition-colors hover:text-accent">
+                → All Notes
+              </a>
+            </div>
+            <h2 class="font-display text-2xl text-ink mt-2">
+              Selected Writing &amp; Publication
+            </h2>
+            {
+              about.publications.map((pub) => (
+                <div class="border-t border-hairline py-4">
+                  <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <p class="font-serif italic text-base text-ink">{pub.title}</p>
+                    <p class="meta">{pub.year}</p>
+                  </div>
+                  <p class="meta mt-1">{pub.venue}</p>
                 </div>
-                <p class="meta mt-1">{pub.venue}</p>
-              </div>
-            ))
-          }
-        </section>
+              ))
+            }
+          </section>
+        )}
 
-        <section id="contact" class="mt-14 scroll-mt-8">
-          <p class="meta text-accent">05</p>
-          <h2 class="font-display text-2xl text-ink mt-2">Contact</h2>
-          <div class="mt-2">
-            <div class="border-t border-hairline py-4">
-              <p class="meta">Email</p>
-              <p class="mt-1 font-mono text-sm text-ink">{about.contact.email}</p>
+        {Object.keys(contact).length > 0 && (
+          <section id="contact" class="mt-14 scroll-mt-8">
+            <p class="meta text-accent">{sectionNumber('contact')}</p>
+            <h2 class="font-display text-2xl text-ink mt-2">Contact</h2>
+            <div class="mt-2">
+              {contact.email && (
+                <div class="border-t border-hairline py-4">
+                  <p class="meta">Email</p>
+                  <p class="mt-1 font-mono text-sm text-ink">{contact.email}</p>
+                </div>
+              )}
+              {contact.website && (
+                <div class="border-t border-hairline py-4">
+                  <p class="meta">Website</p>
+                  <p class="mt-1 font-mono text-sm text-ink">{contact.website}</p>
+                </div>
+              )}
+              {contact.scholar && (
+                <div class="border-t border-hairline py-4">
+                  <p class="meta">Scholar</p>
+                  <p class="mt-1 font-mono text-sm text-ink">{contact.scholar}</p>
+                </div>
+              )}
             </div>
-            <div class="border-t border-hairline py-4">
-              <p class="meta">Website</p>
-              <p class="mt-1 font-mono text-sm text-ink">{about.contact.website}</p>
-            </div>
-            <div class="border-t border-hairline py-4">
-              <p class="meta">Scholar</p>
-              <p class="mt-1 font-mono text-sm text-ink">{about.contact.scholar}</p>
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
       </div>
     </div>
 

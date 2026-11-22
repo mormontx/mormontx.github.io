@@ -1,7 +1,6 @@
 // src/data/about.ts
 // Monograph content for /about — kept here so the page is trivially editable.
-// Every bracketed value below is an intentional editorial slot, not a fact.
-// TODO(tugcan): replace each placeholder before publishing.
+// TODO(tugcan): fill in the empty roles, publications, and contact sections below.
 
 export const about = {
   position: [
@@ -29,35 +28,14 @@ export const about = {
   ],
 
   roles: [
-    // TODO(tugcan): replace [Department] and [University] with the real post.
-    {
-      role: 'Lecturer, [Department]',
-      place: '[University]',
-      years: '[2021 — ]',
-      focus:
-        'Seminar design and the pedagogy of silence; the structures collected on this site.',
-    },
-    // TODO(tugcan): replace [Programme] and [Institution] with the real post.
-    {
-      role: 'Workshop Facilitator, [Programme]',
-      place: '[Institution]',
-      years: '[2019 — ]',
-      focus:
-        'Writing-studio formats, feedback protocols, and timed stillness between exchanges.',
-    },
+    // TODO(tugcan): add the real post — role, place, years, and focus.
   ],
 
   publications: [
-    // TODO(tugcan): replace this placeholder with a real publication, or delete the entry.
-    { title: '[Add publication]', venue: '[Journal / press]', year: '[Year]' },
-    // TODO(tugcan): replace this placeholder with a real publication, or delete the entry.
-    { title: '[Add publication]', venue: '[Journal / press]', year: '[Year]' },
+    // TODO(tugcan): add a real publication here, or leave this section empty.
   ],
 
   contact: {
-    // TODO(tugcan): replace each contact slot with a real address.
-    email: '[name]@[institution].edu',
-    website: '[personal website]',
-    scholar: '[scholar / ORCID]',
+    // TODO(tugcan): add real contact details — email, website, scholar/ORCID.
   },
 };

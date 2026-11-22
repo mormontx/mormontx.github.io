@@ -71,9 +71,9 @@ blueprint:
 
 ## Before publishing
 
-- In `src/data/about.ts`, replace every bracketed editorial slot: `[Department]`, `[University]`, `[2021 — ]`, `[Programme]`, `[Institution]`, `[2019 — ]`, `[Add publication]`, `[Journal / press]`, `[Year]`, `[name]@[institution].edu`, `[personal website]`, `[scholar / ORCID]`.
+- In `src/data/about.ts`, fill in the empty `roles`, `publications`, and `contact` sections (each is marked with a `TODO` comment). The About page renders those sections automatically once they have content.
 - In `src/data/site.ts`, set `name`, `studio`, `siteTitle`, and `description`.
-- In `astro.config.mjs`, `site` is currently set to `https://mormontx.github.io` (the previous project's URL) — update it to the real domain before deploying, and set `base` as well if the site is published under a subpath (e.g. `https://mormontx.github.io/teaching-portfolio-reimagined/`).
+- `astro.config.mjs` already sets `site` to `https://mormontx.github.io` (the live domain). No `base` is required because the site is served from the repository root.
 - The four `public/sketches/*.svg` plates are placeholders — swap in your own drawings when ready.
 
 ## The 3D layer
@@ -82,13 +82,19 @@ The models are three.js + React Three Fiber, built entirely from procedural geom
 
 ## Deployment
 
-This repository is the **source** for the site; it is not currently deployed. GitHub Pages is not configured for this repository (`docs/` is gitignored and no Pages workflow is set up).
+The site is live at <https://mormontx.github.io/>. GitHub Pages serves the published files from the `docs/` folder of the **`mormontx/mormontx.github.io`** repository (Pages → `main` → `/docs`). This repository is the **source**; it is not the Pages repository itself.
 
-To publish, either:
+To redeploy:
 
-- Enable GitHub Pages on this repository (a static host, a `docs/` folder, or an Actions workflow), or
-- Deploy `dist/` after `pnpm build` to any static host (Netlify, Vercel, Cloudflare Pages, S3).
+```sh
+pnpm build                          # build the static site into dist/
+rm -rf <deploy-clone>/docs          # remove the previous build
+cp -R dist <deploy-clone>/docs      # copy the new build into docs/
+touch <deploy-clone>/docs/.nojekyll # keep the Pages marker
+cd <deploy-clone>
+git add docs
+git commit -m "Deploy: rebuild"
+git push origin main
+```
 
-Before deploying, update `site` in `astro.config.mjs` to the real domain. If the site is published under a subpath (e.g. `https://mormontx.github.io/teaching-portfolio-reimagined/`), set `base` accordingly as well, otherwise assets and canonical links will 404.
-
-The previous site lives at `https://mormontx.github.io/` and is a separate deployment.
+`<deploy-clone>` is a local clone of `mormontx/mormontx.github.io`. `astro.config.mjs` already sets `site` to `https://mormontx.github.io`; no `base` is required because the site is served from the repository root.
