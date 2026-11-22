@@ -2,6 +2,8 @@
 interface NavLink {
   href: string;
   label: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
 }
 
 interface Props {
@@ -29,7 +31,17 @@ const { prev, next } = Astro.props;
     }
   </div>
 
-  <div class="sm:text-right">
+  <div class="flex flex-wrap items-center gap-x-6 sm:justify-end">
+    {
+      next?.secondaryHref && next?.secondaryLabel && (
+        <a
+          href={next.secondaryHref}
+          class="meta inline-block py-4 transition-colors hover:text-accent"
+        >
+          {next.secondaryLabel} ↑
+        </a>
+      )
+    }
     {
       next && (
         <a

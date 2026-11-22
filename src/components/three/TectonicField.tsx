@@ -1,7 +1,16 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import CanvasHost from './CanvasHost';
+import InterferenceField, {
+  type VoiceEvent,
+} from './InterferenceField';
 import {
   ContactShadow,
   PaperGround,
@@ -13,28 +22,38 @@ import { useReducedMotion } from '../../lib/useReducedMotion';
 import { useScrollOutProgress } from '../../lib/useScrollOutProgress';
 import { damp } from '../../lib/useScrollProgress';
 import { fitCamera } from '../../lib/cameraFit';
-import { DialecticRoomModel, type RoomAttention } from './structures/StructureModels';
-import { SCENE } from '../../data/scene';
+import { noteForSlot } from '../../lib/roomScore';
+import { useRoomAudio } from '../../lib/useRoomAudio';
+import {
+  DialecticRoomModel,
+  MONOLITH_PERSPECTIVES,
+  MONOLITH_TEACHER_SLOT,
+} from './structures/StructureModels';
 
 const DESKTOP_QUERY = '(min-width: 1024px)';
-const MODEL_SCALE = 1.25;
+const MODEL_SCALE = 1.15;
+const CHORD_MAX = 8;
+const CHORD_TTL_MS = 10000;
+const SHINE_MS = 2000;
 
-/** How long the room keeps watching after the cursor stops (ms). */
-const HOLD_MOUSE = 1400;
-/** A tap holds the room's attention a little longer (ms). */
-const HOLD_TOUCH = 2200;
-/** Opening beat: chairs face the front like rows, then turn inward (ms). */
-const INTRO_MS = 1800;
-/** Furthest the teacher can stand from the ring's centre (world units). */
-const MAX_REACH = 9;
+// Mirror ring geometry. These mirror the private constants in
+// StructureModels.tsx so the floor's emitters land under the mirrors. Only the
+// teacher slot is exported from that module, hence the local duplicates.
+const MONOLITH_SLOTS = 19;
+const MONOLITH_RADIUS = 2.1;
+const MONOLITH_TEACHER_OUTWARD = 0.3;
+const VOICE_RING_SIZE = 8;
+
+const QUESTION_CURSOR = 'url(/cursors/question.svg) 12 12, crosshair';
+const CLEF_CURSOR = 'url(/cursors/clef.svg) 13 16, pointer';
 
 const HERO_CAMERA = {
-  lookAt: [0, 0.6, 0] as [number, number, number],
-  downAngleDeg: 22,
-  azimuthDeg: 30,
-  fitRatio: 0.8,
-  verticalExtent: 1.6,
-  horizontalExtent: 2.95,
+  lookAt: [0, 0.7, 0] as [number, number, number],
+  downAngleDeg: 20,
+  azimuthDeg: 28,
+  fitRatio: 0.82,
+  verticalExtent: 2.2,
+  horizontalExtent: 3.0,
 };
 
 function smoothstep(edge0: number, edge1: number, x: number): number {
@@ -43,17 +62,41 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
 }
 
 /**
- * A single large Dialectic Room model on the paper ground. The ring idles on
- * a slow rotation and dolls in with scroll; both are damped and gated on
- * reduced motion. No per-frame allocations.
- *
- * The cursor (or a tap) is the teacher: while it moves, the chairs turn to
- * face it; once it stops, they turn back to face each other.
+ * The Dialectic Room as a live hero instrument. The ring idles on a slow
+ * rotation, dolls in and fades to paper with scroll (damped, gated on reduced
+ * motion), and reacts to mirror hover/click plus the ASK A QUESTION wave. All
+ * interaction state lives here; the model itself only renders.
  */
 export default function TectonicField() {
   const { ref, progress } = useScrollOutProgress<HTMLDivElement>();
   const [desktop, setDesktop] = useState(false);
   const [canvasMounted, setCanvasMounted] = useState(false);
+
+  const audio = useRoomAudio();
+
+  const [chord, setChordState] = useState<number[]>([]);
+  const chordRef = useRef<number[]>([]);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [shine, setShine] = useState(0);
+  const [wave, setWave] = useState(0);
+  const [waveRunning, setWaveRunning] = useState(false);
+  const [hoveredSlot, setHoveredSlot] = useState<number | null>(null);
+
+  const expiresAt = useRef(new Map<number, number>());
+  const chordTimers = useRef(new Map<number, number>());
+  const shineTimer = useRef<number | null>(null);
+
+  // Ring buffer of the last `VOICE_RING_SIZE` voice events feeding the
+  // interference floor. Mutated in place; a negative `firedAt` marks an empty
+  // slot.
+  const voiceRing = useRef<VoiceEvent[] | null>(null);
+  if (voiceRing.current === null) {
+    voiceRing.current = new Array<VoiceEvent>(VOICE_RING_SIZE);
+    for (let i = 0; i < VOICE_RING_SIZE; i += 1) {
+      voiceRing.current[i] = { x: 0, z: 0, firedAt: -1 };
+    }
+  }
+  const voiceCursor = useRef(0);
 
   useEffect(() => {
     const query = window.matchMedia(DESKTOP_QUERY);
@@ -63,35 +106,257 @@ export default function TectonicField() {
     return () => query.removeEventListener('change', update);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      for (const id of chordTimers.current.values()) window.clearTimeout(id);
+      if (shineTimer.current != null) window.clearTimeout(shineTimer.current);
+    };
+  }, []);
+
+  const setChord = (next: number[]) => {
+    chordRef.current = next;
+    setChordState(next);
+  };
+
+  const clearSlotTimer = (slot: number) => {
+    const id = chordTimers.current.get(slot);
+    if (id != null) {
+      window.clearTimeout(id);
+      chordTimers.current.delete(slot);
+    }
+    expiresAt.current.delete(slot);
+  };
+
+  const removeFromChord = (slot: number) => {
+    clearSlotTimer(slot);
+    setChord(chordRef.current.filter((s) => s !== slot));
+  };
+
+  const addToChord = (slot: number) => {
+    clearSlotTimer(slot);
+    const next = [slot, ...chordRef.current.filter((s) => s !== slot)];
+    while (next.length > CHORD_MAX) {
+      const dropped = next.pop();
+      if (dropped != null) clearSlotTimer(dropped);
+    }
+    setChord(next);
+
+    const now = performance.now();
+    const at = now + CHORD_TTL_MS;
+    expiresAt.current.set(slot, at);
+    const id = window.setTimeout(() => {
+      chordTimers.current.delete(slot);
+      if (expiresAt.current.get(slot) === at) {
+        expiresAt.current.delete(slot);
+        setChord(chordRef.current.filter((s) => s !== slot));
+      }
+    }, CHORD_TTL_MS);
+    chordTimers.current.set(slot, id);
+  };
+
+  const pulseShine = () => {
+    setShine(1);
+    if (shineTimer.current != null) window.clearTimeout(shineTimer.current);
+    shineTimer.current = window.setTimeout(() => setShine(0), SHINE_MS);
+  };
+
+  // Record a voice event at the mirror's paper position. The ring's slow idle
+  // rotation is ignored (the field is anchored to the floor), so the local XZ
+  // frame is used directly; MODEL_SCALE brings it into world units.
+  const pushVoice = (slot: number) => {
+    const ring = voiceRing.current;
+    if (!ring) return;
+    const angle = (slot / MONOLITH_SLOTS) * Math.PI * 2;
+    const radius =
+      slot === MONOLITH_TEACHER_SLOT
+        ? MONOLITH_RADIUS + MONOLITH_TEACHER_OUTWARD
+        : MONOLITH_RADIUS;
+    ring[voiceCursor.current] = {
+      x: Math.cos(angle) * radius * MODEL_SCALE,
+      z: Math.sin(angle) * radius * MODEL_SCALE,
+      firedAt: performance.now(),
+    };
+    voiceCursor.current = (voiceCursor.current + 1) % VOICE_RING_SIZE;
+  };
+
+  const handleHover = (slot: number | null) => setHoveredSlot(slot);
+  const handleVoice = (slot: number) => {
+    pushVoice(slot);
+    audio.playVoice(slot);
+  };
+
+  const handleSelect = (slot: number) => {
+    if (slot === MONOLITH_TEACHER_SLOT) {
+      setSelected(null);
+      pulseShine();
+      return;
+    }
+
+    if (chordRef.current.includes(slot)) {
+      removeFromChord(slot);
+      setSelected((prev) => (prev === slot ? null : prev));
+    } else {
+      addToChord(slot);
+      setSelected(slot);
+      handleVoice(slot);
+    }
+  };
+
+  const handleWaveComplete = () => setWaveRunning(false);
+  const handleAsk = () => {
+    if (waveRunning) return;
+    setWave((w) => w + 1);
+    setWaveRunning(true);
+  };
+  const handleToggleSound = () => audio.toggle();
+  const closeCard = () => setSelected(null);
+
+  // QA-only surface: lets a CDP script drive the exact handlers the mirror
+  // meshes call (onClick -> handleSelect, onPointerOver -> handleHover). Gated
+  // to the dev server so it never ships in the production bundle.
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      (window as unknown as Record<string, unknown>).__heroDebug = {
+        select: handleSelect,
+        hover: handleHover,
+        ask: handleAsk,
+        toggleSound: handleToggleSound,
+        closeCard,
+      };
+    }
+  });
+
+  const readout = useMemo(() => {
+    if (chord.length === 0) return 'VOICES 00 · SILENCE';
+    const names = chord
+      .map((slot) => noteForSlot(slot)?.name)
+      .filter((name): name is string => Boolean(name));
+    return `VOICES ${String(chord.length).padStart(2, '0')} · ${names.join(' ')}`;
+  }, [chord]);
+
+  const resolutionVisible = chord.length >= 4;
+  const [resolutionMounted, setResolutionMounted] = useState(false);
+  const [resolutionOpacity, setResolutionOpacity] = useState(0);
+
+  useEffect(() => {
+    if (resolutionVisible) {
+      setResolutionMounted(true);
+      const raf = requestAnimationFrame(() => setResolutionOpacity(1));
+      return () => cancelAnimationFrame(raf);
+    }
+
+    setResolutionOpacity(0);
+    const timer = window.setTimeout(() => setResolutionMounted(false), 320);
+    return () => window.clearTimeout(timer);
+  }, [resolutionVisible]);
+
   return (
     <div ref={ref} className="relative h-full w-full">
-      <div className="hero-canvas-mask absolute inset-0">
-        <CanvasHost
-          className="h-full w-full"
-          fallback={<SceneFallback />}
-          onCanvasMount={() => setCanvasMounted(true)}
-        >
-          <StudioLights />
-          <PaperGround />
-          <ContactShadow
-            radius={2.7}
-            scale={[1.25, 0.95, 1]}
-            opacity={0.7}
-          />
-          <SceneFog />
-          <HeroRing progress={desktop ? progress : 0} />
-        </CanvasHost>
+      {/* Canvas band: fixed height on mobile, full bleed on lg. The cursor is
+          swapped here (not per-mesh) so the hot-spot never flickers. */}
+      <div
+        className="relative h-[min(56svh,380px)] lg:absolute lg:inset-0 lg:h-auto"
+        style={{ cursor: hoveredSlot != null ? CLEF_CURSOR : QUESTION_CURSOR }}
+      >
+        <div className="hero-canvas-mask absolute inset-0">
+          <CanvasHost
+            className="h-full w-full"
+            environment
+            fallback={<SceneFallback />}
+            onCanvasMount={() => setCanvasMounted(true)}
+          >
+            <StudioLights />
+            <PaperGround />
+            <InterferenceField emitters={voiceRing} />
+            <ContactShadow
+              radius={2.7}
+              scale={[1.25, 0.95, 1]}
+              opacity={0.5}
+            />
+            <SceneFog />
+            <HeroRing
+              progress={desktop ? progress : 0}
+              chord={chord}
+              selected={selected}
+              shine={shine}
+              wave={wave}
+              onHoverSlot={handleHover}
+              onSelect={handleSelect}
+              onVoice={handleVoice}
+              onWaveComplete={handleWaveComplete}
+            />
+          </CanvasHost>
+        </div>
+
+        {/* Mobile caption sits inside the canvas band (above the mask). */}
+        {canvasMounted && (
+          <p className="meta pointer-events-none absolute bottom-3 right-4 max-w-[15rem] text-right lg:hidden">
+            MODEL 01 — THE DIALECTIC ROOM · SCALE 1:50 · N.T.S.
+          </p>
+        )}
       </div>
 
+      {/* Controls: under the canvas on mobile, bottom-left on lg. */}
       {canvasMounted && (
-        <div className="pointer-events-none absolute bottom-4 right-4 text-right">
-          <p className="meta text-accent">
-            <span className="lg:hidden">Tap to teach · wait to listen</span>
-            <span className="hidden lg:inline">Move to teach · stop to listen</span>
-          </p>
-          <p className="meta mt-1 lg:hidden">MODEL 01 — THE DIALECTIC ROOM</p>
-          <p className="meta mt-1 hidden lg:block">
-            MODEL 01 — THE DIALECTIC ROOM · SCALE 1:50 · N.T.S.
+        <div className="relative z-10 mt-3 px-6 sm:px-8 lg:absolute lg:bottom-4 lg:left-4 lg:mt-0 lg:px-0">
+          <div className="flex min-w-0 flex-col items-start gap-2">
+            {resolutionMounted && (
+              <p
+                aria-hidden={!resolutionVisible}
+                className="meta text-accent"
+                style={{
+                  opacity: resolutionOpacity,
+                  transition: 'opacity 320ms ease',
+                }}
+              >
+                THE ROOM HOLDS THE CHORD
+              </p>
+            )}
+            <p className="meta text-ink">{readout}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleAsk}
+                disabled={waveRunning}
+                className="meta inline-flex min-h-[44px] shrink-0 items-center border border-hairline px-3 py-2 transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                ASK A QUESTION
+              </button>
+              <button
+                type="button"
+                onClick={handleToggleSound}
+                aria-pressed={audio.enabled}
+                className="meta inline-flex min-h-[44px] shrink-0 items-center border border-hairline px-3 py-2 transition-colors hover:border-accent hover:text-accent"
+              >
+                {audio.enabled ? 'SOUND ON' : 'SOUND OFF'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop caption, right-aligned in the bottom bar. */}
+      {canvasMounted && (
+        <p className="meta pointer-events-none absolute bottom-4 right-4 hidden max-w-[15rem] text-right lg:block">
+          MODEL 01 — THE DIALECTIC ROOM · SCALE 1:50 · N.T.S.
+        </p>
+      )}
+
+      {/* Reflection card, top-right. */}
+      {canvasMounted && selected != null && (
+        <div className="absolute right-4 top-4 z-20 w-[min(20rem,calc(100%-2rem))] border border-hairline bg-paper p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="meta text-accent">REFLECTION</p>
+            <button
+              type="button"
+              onClick={closeCard}
+              className="meta inline-flex shrink-0 items-center border border-hairline px-2 py-1 transition-colors hover:border-accent hover:text-accent"
+            >
+              CLOSE
+            </button>
+          </div>
+          <p className="mt-3 font-serif text-base italic leading-snug text-ink/90">
+            {MONOLITH_PERSPECTIVES[selected]}
           </p>
         </div>
       )}
@@ -99,7 +364,29 @@ export default function TectonicField() {
   );
 }
 
-function HeroRing({ progress }: { progress: number }) {
+interface HeroRingProps {
+  progress: number;
+  chord: number[];
+  selected: number | null;
+  shine: number;
+  wave: number;
+  onHoverSlot: (slot: number | null) => void;
+  onSelect: (slot: number) => void;
+  onVoice: (slot: number) => void;
+  onWaveComplete: () => void;
+}
+
+function HeroRing({
+  progress,
+  chord,
+  selected,
+  shine,
+  wave,
+  onHoverSlot,
+  onSelect,
+  onVoice,
+  onWaveComplete,
+}: HeroRingProps) {
   const reducedMotion = useReducedMotion();
   const group = useRef<THREE.Group>(null);
   const camera = useThree(
@@ -110,57 +397,7 @@ function HeroRing({ progress }: { progress: number }) {
   const aspect = size.width / Math.max(1, size.height);
 
   const base = useRef<{ x: number; y: number; z: number } | null>(null);
-
-  // --- the teacher: pointer state, projected onto the ground each frame ---
-  const attention = useRef<RoomAttention>({ x: 0, z: 0, engaged: true, snap: true });
-  const pointer = useRef({ x: 0, y: 0, at: -Infinity, hold: HOLD_MOUSE });
-  const introUntil = useRef(0);
-  const ray = useMemo(() => new THREE.Raycaster(), []);
-  const ndc = useMemo(() => new THREE.Vector2(), []);
-  const ground = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), []);
-  const hit = useMemo(() => new THREE.Vector3(), []);
-  const marker = useRef<THREE.Group>(null);
-  const markerMaterial = useMemo(
-    () =>
-      new THREE.MeshBasicMaterial({
-        color: SCENE.palette.accent,
-        transparent: true,
-        opacity: 0,
-        depthWrite: false,
-        toneMapped: false,
-      }),
-    [],
-  );
-
-  useEffect(() => {
-    if (reducedMotion) return;
-    const hero = gl.domElement.closest('section') ?? gl.domElement;
-    const inside = (e: PointerEvent) => {
-      const r = hero.getBoundingClientRect();
-      return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
-    };
-    const onMove = (e: PointerEvent) => {
-      if (e.pointerType === 'touch') return; // touch scrolls; a tap is handled below
-      if (!inside(e)) {
-        pointer.current.at = -Infinity; // left the hero: let the room go
-        return;
-      }
-      pointer.current = { x: e.clientX, y: e.clientY, at: performance.now(), hold: HOLD_MOUSE };
-    };
-    const onDown = (e: PointerEvent) => {
-      if (e.pointerType !== 'touch' || !inside(e)) return;
-      pointer.current = { x: e.clientX, y: e.clientY, at: performance.now(), hold: HOLD_TOUCH };
-    };
-    window.addEventListener('pointermove', onMove, { passive: true });
-    window.addEventListener('pointerdown', onDown, { passive: true });
-    return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerdown', onDown);
-    };
-  }, [gl, reducedMotion]);
-
-  useEffect(() => () => markerMaterial.dispose(), [markerMaterial]);
-  const current = useRef({ camZ: 0, camY: 0, rotY: 0, spread: 0, fade: 0 });
+  const current = useRef({ camZ: 0, camY: 0, rotY: 0, fade: 0 });
   const idle = useRef(0);
   const progressRef = useRef(progress);
   progressRef.current = progress;
@@ -195,20 +432,7 @@ function HeroRing({ progress }: { progress: number }) {
       y: result.position[1],
       z: result.position[2],
     };
-
-    // Opening beat: the chairs start out facing the front of the room — the
-    // viewer's side, like rows — then turn inward once the intro ends.
-    if (introUntil.current === 0) {
-      const len = Math.hypot(result.position[0], result.position[2]) || 1;
-      attention.current = {
-        x: (result.position[0] / len) * 6,
-        z: (result.position[2] / len) * 6,
-        engaged: true,
-        snap: true,
-      };
-      introUntil.current = performance.now() + INTRO_MS;
-    }
-    current.current = { camZ: 0, camY: 0, rotY: 0, spread: 0, fade: 0 };
+    current.current = { camZ: 0, camY: 0, rotY: 0, fade: 0 };
   }, [
     aspect,
     azimuthDeg,
@@ -231,15 +455,12 @@ function HeroRing({ progress }: { progress: number }) {
     const lambda = 1 - Math.exp(-6 * delta);
     const target = progressRef.current;
 
-    if (!reducedMotion) {
-      idle.current += delta * 0.04;
-    }
+    idle.current += delta * 0.045;
 
     c.fade = damp(c.fade, target, lambda);
-    c.camZ = damp(c.camZ, 2.5 - 5.0 * target, lambda);
-    c.camY = damp(c.camY, 0.25 * target, lambda);
-    c.rotY = damp(c.rotY, 0.12 * target, lambda);
-    c.spread = damp(c.spread, 1 + 0.03 * target, lambda);
+    c.camZ = damp(c.camZ, 2.4 - 4.6 * target, lambda);
+    c.camY = damp(c.camY, 0.2 * target, lambda);
+    c.rotY = damp(c.rotY, 0.1 * target, lambda);
 
     camera.position.x = b.x;
     camera.position.y = b.y + c.camY;
@@ -247,63 +468,24 @@ function HeroRing({ progress }: { progress: number }) {
     camera.lookAt(lookX, lookY + c.camY * 0.5, lookZ);
 
     g.rotation.y = idle.current + c.rotY;
-    g.scale.setScalar(c.spread);
-
-    // The teacher: follow the pointer while it is active, else let go.
-    const now = performance.now();
-    const p = pointer.current;
-    const att = attention.current;
-    const teaching = now - p.at < p.hold;
-    if (teaching) {
-      const rect = gl.domElement.getBoundingClientRect();
-      ndc.set(
-        ((p.x - rect.left) / rect.width) * 2 - 1,
-        -((p.y - rect.top) / rect.height) * 2 + 1,
-      );
-      ray.setFromCamera(ndc, camera);
-      // Above the horizon the ray never meets the floor: keep the last spot.
-      if (ray.ray.intersectPlane(ground, hit)) {
-        const reach = Math.hypot(hit.x, hit.z);
-        const k = reach > MAX_REACH ? MAX_REACH / reach : 1;
-        att.x = hit.x * k;
-        att.z = hit.z * k;
-      }
-      att.engaged = true;
-      att.showLines = true;
-    } else {
-      att.engaged = now < introUntil.current;
-      att.showLines = false;
-    }
-
-    const m = marker.current;
-    if (m) {
-      m.position.set(att.x, 0.012, att.z);
-      const show = teaching ? 0.9 : 0;
-      markerMaterial.opacity = damp(markerMaterial.opacity, show, 1 - Math.exp(-8 * delta));
-      m.visible = markerMaterial.opacity > 0.01;
-    }
 
     const fadeOut = smoothstep(0.55, 0.82, c.fade);
     gl.domElement.style.opacity = String(1 - fadeOut);
   });
 
   return (
-    <>
-      <group ref={group} scale={MODEL_SCALE}>
-        <DialecticRoomModel active={false} attention={attention} />
-      </group>
-      {/* Where the teacher stands: a drafting mark on the floor. */}
-      <group ref={marker} rotation-x={-Math.PI / 2} visible={false}>
-        <mesh material={markerMaterial}>
-          <ringGeometry args={[0.2, 0.225, 48]} />
-        </mesh>
-        <mesh material={markerMaterial}>
-          <planeGeometry args={[0.7, 0.014]} />
-        </mesh>
-        <mesh material={markerMaterial} rotation-z={Math.PI / 2}>
-          <planeGeometry args={[0.7, 0.014]} />
-        </mesh>
-      </group>
-    </>
+    <group ref={group} scale={MODEL_SCALE}>
+      <DialecticRoomModel
+        active={false}
+        chord={chord}
+        selected={selected}
+        shine={shine}
+        wave={wave}
+        onHoverSlot={onHoverSlot}
+        onSelect={onSelect}
+        onVoice={onVoice}
+        onWaveComplete={onWaveComplete}
+      />
+    </group>
   );
 }

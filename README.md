@@ -71,9 +71,9 @@ blueprint:
 
 ## Before publishing
 
-- In `src/data/about.ts`, replace every bracketed editorial slot: `[Department]`, `[University]`, `[2021 — ]`, `[Programme]`, `[Institution]`, `[2019 — ]`, `[Add publication]`, `[Journal / press]`, `[Year]`, `[name]@[institution].edu`, `[personal website]`, `[scholar / ORCID]`.
+- `src/data/about.ts` is filled from the 2026 CV; update it there when the CV changes.
 - In `src/data/site.ts`, set `name`, `studio`, `siteTitle`, and `description`.
-- In `astro.config.mjs`, `site` is set to `https://mormontx.github.io` — change it if you move to a custom domain.
+- `astro.config.mjs` already sets `site` to `https://mormontx.github.io` (the live domain). No `base` is required because the site is served from the repository root.
 - The four `public/sketches/*.svg` plates are placeholders — swap in your own drawings when ready.
 
 ## The 3D layer
@@ -82,11 +82,19 @@ The models are three.js + React Three Fiber, built entirely from procedural geom
 
 ## Deployment
 
-`mormontx.github.io` is served by GitHub Pages from the `docs/` folder of the `main` branch (no CI required). After `pnpm build`, refresh the committed output with:
+The site is live at <https://mormontx.github.io/>. GitHub Pages serves the published files from the `docs/` folder of the **`mormontx/mormontx.github.io`** repository (Pages → `main` → `/docs`). This repository is the **source**; it is not the Pages repository itself.
+
+To redeploy:
 
 ```sh
-rm -rf docs && cp -r dist docs
-git add docs && git commit -m "Rebuild docs" && git push
+pnpm build                          # build the static site into dist/
+rm -rf <deploy-clone>/docs          # remove the previous build
+cp -R dist <deploy-clone>/docs      # copy the new build into docs/
+touch <deploy-clone>/docs/.nojekyll # keep the Pages marker
+cd <deploy-clone>
+git add docs
+git commit -m "Deploy: rebuild"
+git push origin main
 ```
 
-The live site is `https://mormontx.github.io/`.
+`<deploy-clone>` is a local clone of `mormontx/mormontx.github.io`. `astro.config.mjs` already sets `site` to `https://mormontx.github.io`; no `base` is required because the site is served from the repository root.

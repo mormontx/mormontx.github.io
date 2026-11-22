@@ -25,7 +25,7 @@ import { BUILDS } from './builders';
 const pad = (n: number) => String(n).padStart(2, '0');
 
 const SR_DESCRIPTIONS: Record<number, string> = {
-  1: 'Interactive three-dimensional model of The Dialectic Room: eighteen chairs in a ring with one empty seat. Use the Exploded view button to separate the chairs.',
+  1: 'Interactive three-dimensional model of The Dialectic Room: eighteen monoliths in a ring with one empty place, each catching the light differently. Use the Exploded view button to separate the monoliths.',
   2: 'Interactive model of The Unstable Prompt as a frame. Raise a question to add an unbraced storey; pose a challenge to push on the top, and the lowest unbraced storey buckles before the cohort braces it. The status line below describes each change.',
   3: 'Interactive model of Scaffolding Silence as a scaffold around an empty centre. Raise a question and the next lift goes up only while the silence holds; when a silence is held, an idea rises through the centre. Filling the silence leaves the lift untied, and a challenge shakes untied parts loose. The status line below describes each change.',
   4: 'Interactive model of Marginalia as Dialogue as a bridge across a margin. Each question builds a segment out from the teacher’s bank and each reply builds one back from the student’s, until they meet. A challenge loads the bridge: open half-spans sag, a closed span carries it. The status line below describes each change.',
@@ -50,8 +50,8 @@ const FOG_FAR = 80;
 
 /** The Dialectic Room's two framings: assembled, and with the ring pulled apart. */
 const ROOM_FRAMING: { assembled: Framing; exploded: Framing } = {
-  assembled: { center: [0, 0.05, 0], verticalExtent: 0.6, horizontalExtent: 2.6 },
-  exploded: { center: [0, 0.1, 0], verticalExtent: 0.65, horizontalExtent: 3.5 },
+  assembled: { center: [0, 0.7, 0], verticalExtent: 1.1, horizontalExtent: 2.6 },
+  exploded: { center: [0, 0.95, 0], verticalExtent: 1.25, horizontalExtent: 3.5 },
 };
 
 type ViewerFit = FitCameraResult & { center: Framing['center'] };

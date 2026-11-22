@@ -6,6 +6,7 @@ import type { ThreeElement } from '@react-three/fiber';
 import { SCENE } from '../../data/scene';
 import { useInView } from '../../lib/useInView';
 import { useReducedMotion } from '../../lib/useReducedMotion';
+import { getStudioEnvironment } from './studioEnvironment';
 
 export type CameraOverride = Omit<
   Partial<ThreeElement<typeof THREE.PerspectiveCamera>>,
@@ -23,6 +24,8 @@ export interface CanvasHostProps {
   paused?: boolean;
   /** Called once the WebGL canvas has actually mounted. */
   onCanvasMount?: () => void;
+  /** Light the whole scene with the studio environment (the hero does). */
+  environment?: boolean;
 }
 
 /**
@@ -38,6 +41,7 @@ export default function CanvasHost({
   fallback = null,
   paused = false,
   onCanvasMount,
+  environment = false,
 }: CanvasHostProps) {
   const reducedMotion = useReducedMotion();
   const [webgl, setWebgl] = useState<boolean | null>(null);
@@ -83,10 +87,16 @@ export default function CanvasHost({
             position: SCENE.camera.position,
             ...camera,
           }}
-          onCreated={({ gl, camera: activeCamera }) => {
+          onCreated={({ gl, scene, camera: activeCamera }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = SCENE.render.toneMappingExposure;
             gl.outputColorSpace = THREE.SRGBColorSpace;
+
+            // The hero is lit by the studio environment as a whole; other
+            // scenes keep their matte plaster look, and the room's mirrors
+            // bring their own reflections.
+            if (environment) scene.environment = getStudioEnvironment(gl);
+
             activeCamera.lookAt(
               SCENE.camera.lookAt[0],
               SCENE.camera.lookAt[1],

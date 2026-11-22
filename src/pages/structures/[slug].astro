@@ -44,7 +44,12 @@ const nextLink = next
       href: `/structures/${next.id}/`,
       label: `${pad(next.data.number)} · ${next.data.title.toUpperCase()}`,
     }
-  : null;
+  : {
+      href: '/notes/01-the-margin-is-a-room/',
+      label: 'FIELD NOTE · THE MARGIN IS A ROOM',
+      secondaryHref: '/',
+      secondaryLabel: 'ARCHIVE INDEX',
+    };
 ---
 
 <BaseLayout title={d.title}>
@@ -101,7 +106,13 @@ const nextLink = next
           <MarginDialogue />
         ) : (
           <figure class="plate">
-            <img src={d.sketch} alt={d.sketchCaption} class="w-full" />
+            <img
+              src={d.sketch}
+              alt={d.sketchCaption}
+              width="800"
+              height="520"
+              class="block w-full h-auto"
+            />
             <figcaption>
               <span>FIG. 01 — {d.sketchCaption}</span>
               <span>SCALE: NTS</span>
@@ -117,7 +128,7 @@ const nextLink = next
     </div>
 
     <!-- 6. narrative -->
-    <div class="md-content relative max-w-[65ch] mt-16">
+    <div class="md-content relative max-w-[65ch] lg:max-w-[min(62ch,calc(100%-15.5rem))] mt-16">
       <Content />
     </div>
 
