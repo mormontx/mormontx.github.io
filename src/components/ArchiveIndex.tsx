@@ -2,6 +2,7 @@ import { useState } from 'react';
 import CanvasHost from './three/CanvasHost';
 import StructureModel from './three/structures/StructureModels';
 import SceneFallback from './three/SceneFallback';
+import { pad } from '../lib/format';
 
 export interface ArchiveStructure {
   id: string;
@@ -13,7 +14,6 @@ export interface ArchiveStructure {
   year: number;
 }
 
-const pad = (n: number) => String(n).padStart(2, '0');
 
 interface ArchiveIndexProps {
   structures: ArchiveStructure[];
@@ -21,63 +21,30 @@ interface ArchiveIndexProps {
 
 /**
  * Interactive archive index: a typographic list on the left and a sticky
- * live-model plate on the right. Hover/focus is a progressive enhancement only
- * — every row is a normal anchor, so keyboard and no-JS navigation still work.
+ * live-model plate on the right (below the list on mobile). Hover/focus is a
+ * progressive enhancement only — every row is a normal anchor, so keyboard
+ * and no-JS navigation still work. The plate's own prev/next and dash controls
+ * let touch screens, which have no hover, browse the models too.
  */
 export default function ArchiveIndex({ structures }: ArchiveIndexProps) {
   const [current, setCurrent] = useState(structures[0]?.number ?? 1);
   const [hovered, setHovered] = useState<number | null>(null);
 
-  const active = structures.find((s) => s.number === current) ?? structures[0];
+  const activeIndex = Math.max(
+    0,
+    structures.findIndex((s) => s.number === current),
+  );
+  const active = structures[activeIndex];
+  const total = structures.length;
+
+  // Touch screens have no hover, so the plate also has its own controls.
+  const step = (delta: number) =>
+    setCurrent(structures[(activeIndex + delta + total) % total].number);
 
   return (
     <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-      {/* Live model plate — above the list on mobile, sticky on desktop. */}
-      <div className="order-1 lg:order-2">
-        <div className="lg:sticky lg:top-[120px]">
-          <div className="overflow-hidden border border-hairline bg-paper">
-            <div className="relative h-[44vh] min-h-[360px] lg:h-[62vh]">
-              <div className="panel-canvas-mask absolute inset-0">
-                <CanvasHost className="h-full w-full" fallback={<SceneFallback />}>
-                  {active && (
-                    <StructureModel
-                      key={active.number}
-                      number={active.number}
-                      active={hovered === active.number}
-                    />
-                  )}
-                </CanvasHost>
-              </div>
-            </div>
-
-            <div className="border-t border-hairline px-5 py-4">
-              <p className="meta text-accent">
-                № {pad(active.number)} — {active.title.toUpperCase()} ·{' '}
-                {active.typology.toUpperCase()} · {active.year}
-              </p>
-
-              <div className="mt-3 flex items-center justify-between">
-                <p className="meta">
-                  {pad(active.number)} / {pad(structures.length)}
-                </p>
-                <div className="flex gap-1.5" aria-hidden="true">
-                  {structures.map((s) => (
-                    <span
-                      key={s.number}
-                      className={`h-px w-9 ${
-                        s.number === active.number ? 'bg-accent' : 'bg-hairline'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Typographic list. */}
-      <div className="order-2 lg:order-1">
+      {/* Typographic list — first in reading order on every screen size. */}
+      <div>
         {structures.map((entry) => {
           const isHovered = hovered === entry.number;
           const isDimmed = hovered !== null && !isHovered;
@@ -118,6 +85,82 @@ export default function ArchiveIndex({ structures }: ArchiveIndexProps) {
             </a>
           );
         })}
+      </div>
+
+      {/* Live model plate — below the list on mobile, sticky on desktop. */}
+      <div>
+        <div className="lg:sticky lg:top-[120px]">
+          <div className="overflow-hidden border border-hairline bg-paper">
+            <div className="relative h-[300px] sm:h-[380px] lg:h-[62vh] lg:min-h-[360px]">
+              <div className="panel-canvas-mask absolute inset-0">
+                <CanvasHost className="h-full w-full" fallback={<SceneFallback />}>
+                  {active && (
+                    <StructureModel
+                      key={active.number}
+                      number={active.number}
+                      active={hovered === active.number}
+                    />
+                  )}
+                </CanvasHost>
+              </div>
+            </div>
+
+            <div className="border-t border-hairline px-5 py-4">
+              <a
+                href={`/structures/${active.id}/`}
+                className="meta block text-accent underline decoration-transparent underline-offset-4 transition-colors hover:decoration-accent"
+              >
+                № {pad(active.number)} — {active.title.toUpperCase()} ·{' '}
+                {active.typology.toUpperCase()} · {active.year}
+              </a>
+
+              <div className="mt-2 flex items-center justify-between">
+                <div className="-ml-2 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => step(-1)}
+                    aria-label="Previous model"
+                    className="meta flex h-8 w-8 items-center justify-center transition-colors hover:text-accent"
+                  >
+                    ←
+                  </button>
+                  <p className="meta tabular-nums">
+                    {pad(active.number)} / {pad(total)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => step(1)}
+                    aria-label="Next model"
+                    className="meta flex h-8 w-8 items-center justify-center transition-colors hover:text-accent"
+                  >
+                    →
+                  </button>
+                </div>
+                <div className="flex gap-1.5">
+                  {structures.map((s) => {
+                    const isActive = s.number === active.number;
+                    return (
+                      <button
+                        key={s.number}
+                        type="button"
+                        onClick={() => setCurrent(s.number)}
+                        aria-label={`Show model ${pad(s.number)}, ${s.title}`}
+                        aria-pressed={isActive}
+                        className="group/dot flex h-8 items-center"
+                      >
+                        <span
+                          className={`block h-px w-9 transition-colors ${
+                            isActive ? 'bg-accent' : 'bg-hairline group-hover/dot:bg-mute'
+                          }`}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

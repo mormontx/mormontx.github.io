@@ -595,9 +595,11 @@ export const MODEL_CONFIG: Record<number, StructureModelConfig> = {
     shadowScale: [1.3, 0.9, 1],
   },
   3: {
-    lookAt: [0, 0.9, 0],
+    // Members are 2.6 tall (y 0 → 2.6); frame the full height plus headroom so
+    // the tops are never cropped in the archive plate.
+    lookAt: [0, 1.15, 0],
     downAngleDeg: 11,
-    verticalExtent: 1.5,
+    verticalExtent: 1.7,
     horizontalExtent: 1.1,
     shadowRadius: 2.0,
     shadowScale: [1.2, 1.0, 1],
