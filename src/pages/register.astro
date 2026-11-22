@@ -1,12 +1,12 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { pad, CountWord } from '../lib/format';
 
 const structures = (await getCollection('structures')).sort(
   (a, b) => a.data.number - b.data.number,
 );
 
-const pad = (n: number) => String(n).padStart(2, '0');
 
 type Structure = (typeof structures)[number];
 
@@ -32,7 +32,7 @@ for (const s of structures) {
       Register of Structures
     </h1>
     <p class="mt-4 max-w-2xl font-serif italic text-lg text-mute">
-      Four documented classroom structures, indexed by lineage and material.
+      {CountWord(structures.length)} documented classroom structures, indexed by lineage and material.
     </p>
 
     <!-- dense index table -->

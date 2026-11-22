@@ -6,8 +6,7 @@ import ElevationDiagram from '../../components/ElevationDiagram.astro';
 import BlueprintDrawer from '../../components/BlueprintDrawer.astro';
 import StructureNav from '../../components/StructureNav.astro';
 import StructureViewer from '../../components/three/StructureViewer';
-
-const pad = (n: number) => String(n).padStart(2, '0');
+import { pad } from '../../lib/format';
 
 export async function getStaticPaths() {
   const entries = (await getCollection('structures')).sort(
@@ -18,13 +17,14 @@ export async function getStaticPaths() {
     params: { slug: entry.id },
     props: {
       entry,
+      total: entries.length,
       prev: i > 0 ? entries[i - 1] : null,
       next: i < entries.length - 1 ? entries[i + 1] : null,
     },
   }));
 }
 
-const { entry, prev, next } = Astro.props;
+const { entry, total, prev, next } = Astro.props;
 const { Content } = await render(entry);
 
 const d = entry.data;
@@ -51,7 +51,7 @@ const nextLink = next
       <p class="meta">
         <a href="/" class="transition-colors hover:text-accent">← Index</a>
         <span class="text-hairline"> · </span>
-        Project {pad(d.number)}/04
+        Project {pad(d.number)}/{pad(total)}
       </p>
     </div>
 
@@ -76,6 +76,7 @@ const nextLink = next
     <div class="mt-12">
       <SpecSheet
         number={d.number}
+        total={total}
         title={d.title}
         typology={d.typology}
         scale={d.scale}

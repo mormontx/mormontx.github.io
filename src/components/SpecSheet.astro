@@ -1,6 +1,8 @@
 ---
 interface Props {
   number: number;
+  /** Total structures in the archive, for the sheet count. */
+  total: number;
   title: string;
   typology: string;
   scale: string;
@@ -10,10 +12,10 @@ interface Props {
   year: number;
 }
 
-const { number, title, typology, scale, medium, loadBearing, site, year } =
-  Astro.props;
+import { pad } from '../lib/format';
 
-const pad = (n: number) => String(n).padStart(2, '0');
+const { number, total, title, typology, scale, medium, loadBearing, site, year } =
+  Astro.props;
 
 const rows: Array<{ label: string; value: string }> = [
   { label: 'Project', value: `${pad(number)} / ${title}` },
@@ -29,7 +31,7 @@ const rows: Array<{ label: string; value: string }> = [
 <div>
   <div class="flex items-baseline justify-between gap-4">
     <p class="meta">Architectural Specification</p>
-    <p class="meta">Sheet {pad(number)}/04</p>
+    <p class="meta">Sheet {pad(number)}/{pad(total)}</p>
   </div>
 
   <dl class="spec-grid grid sm:grid-cols-2">

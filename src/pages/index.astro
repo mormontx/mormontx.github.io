@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import TectonicField from '../components/three/TectonicField';
 import ArchiveIndex from '../components/ArchiveIndex';
+import { pad, countWord, CountWord } from '../lib/format';
 
 const structures = (await getCollection('structures')).sort(
   (a, b) => a.data.number - b.data.number,
@@ -17,6 +18,9 @@ const archive = structures.map((entry) => ({
   medium: entry.data.medium,
   year: entry.data.year,
 }));
+
+const count = structures.length;
+const firstYear = Math.min(...structures.map((s) => s.data.year));
 ---
 
 <BaseLayout title="Index">
@@ -43,7 +47,7 @@ const archive = structures.map((entry) => ({
           A teaching portfolio composed as an architectural monograph.
         </p>
         <p class="meta mt-5">
-          FOUR STRUCTURES · ONE ARCHIVE · MODELS IN THREE DIMENSIONS
+          {countWord(count).toUpperCase()} STRUCTURES · ONE ARCHIVE · MODELS IN THREE DIMENSIONS
         </p>
         <a
           href="#archive"
@@ -66,7 +70,7 @@ const archive = structures.map((entry) => ({
 
     <div class="flex items-baseline justify-between py-4">
       <p class="meta">Index / Selected Structures</p>
-      <p class="meta">[2022 —]</p>
+      <p class="meta">[{firstYear} —]</p>
     </div>
 
     <ArchiveIndex structures={archive} client:visible />
@@ -75,9 +79,9 @@ const archive = structures.map((entry) => ({
   <!-- Archive statement, below the index. -->
   <section class="shell pb-20 sm:pb-28">
     <blockquote class="max-w-2xl font-serif text-2xl italic leading-snug text-mute sm:text-3xl">
-      Four structures, documented as models — each one a load path through a
+      {CountWord(count)} structures, documented as models — each one a load path through a
       room. Read the index, or begin with the register.
     </blockquote>
-    <p class="meta mt-8">04 Structures Documented — An Ongoing Archive</p>
+    <p class="meta mt-8">{pad(count)} Structures Documented — An Ongoing Archive</p>
   </section>
 </BaseLayout>
